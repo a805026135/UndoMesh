@@ -22,6 +22,11 @@ venv/
 data/memory/
 data/sessions/
 data/externalized/
+data/runtime/
+data/skills/
+data/config/
+data/security/
+.miniclaude/
 
 # Unrelated projects
 accountant/

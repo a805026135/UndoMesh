@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Any
 
+from miniclaude.agents.contracts import ContractResult, TaskContract, TaskStatus
+from miniclaude.agents.scheduler import ContractScheduler
 from miniclaude.agents.sub_agent import AgentResult, SubAgent, AGENT_PROFILES
 from miniclaude.core.config import MiniClaudeConfig
 from miniclaude.llm.client import ClaudeClient
 from miniclaude.tools.base import BaseTool, ToolResult
 from miniclaude.tools.registry import ToolRegistry
+from miniclaude.runtime.store import EventStore
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +156,54 @@ class Orchestrator:
             return result
         finally:
             self._active_agents.pop(agent.name, None)
+
+    async def execute_contracts(
+        self,
+        contracts: list[TaskContract],
+        *,
+        event_store: EventStore | None = None,
+        session_id: str = "orchestrator",
+        max_concurrency: int = 4,
+        isolate_writes: bool = True,
+    ) -> dict[str, ContractResult]:
+        """Execute a dependency graph with explicit budgets and write sets."""
+
+        async def runner(contract: TaskContract, workspace: Path) -> ContractResult:
+            scoped_config = self.config.model_copy(
+                update={"project_dir": str(workspace)}
+            )
+            agent = SubAgent(
+                agent_type=contract.agent_type,
+                config=scoped_config,
+                llm_client=self.llm_client,
+                tool_registry=self.tool_registry,
+            )
+            context = {
+                "readable_paths": contract.readable_paths,
+                "writable_paths": contract.writable_paths,
+                "expected_outputs": contract.expected_outputs,
+                "verification_commands": contract.verification_commands,
+            }
+            result = await agent.run(contract.objective, context)
+            return ContractResult(
+                task_id=contract.task_id,
+                status=TaskStatus.COMPLETED if result.success else TaskStatus.FAILED,
+                output=result.output,
+                error=result.error,
+                iterations=result.iterations,
+                tokens=result.total_input_tokens + result.total_output_tokens,
+                workspace=str(workspace),
+            )
+
+        scheduler = ContractScheduler(
+            self.config.effective_project_dir(),
+            runner,
+            max_concurrency=max_concurrency,
+            isolate_writes=isolate_writes,
+            event_store=event_store,
+            session_id=session_id,
+        )
+        return await scheduler.execute(contracts)
 
     @property
     def active_agent_count(self) -> int:

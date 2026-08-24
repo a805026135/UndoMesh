@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {"id": "runtime-text", "suite": "lifecycle", "test": "tests/test_query_loop_integration.py::test_text_response_emits_closed_lifecycle"},
+    {"id": "runtime-replay-fork", "suite": "replay", "test": "tests/test_runtime_persistence.py"},
+    {"id": "indirect-injection", "suite": "security", "test": "tests/test_provenance_security.py"},
+    {"id": "overflow-recovery", "suite": "context", "test": "tests/test_query_loop_integration.py::test_context_overflow_compacts_event_history_and_retries"},
+    {"id": "skill-gates", "suite": "skill", "test": "tests/test_skill_evolution.py"},
+    {"id": "contract-scheduler", "suite": "multi-agent", "test": "tests/test_contract_scheduler.py"},
+    {"id": "byok-providers", "suite": "provider", "test": "tests/test_model_providers.py"},
+    {"id": "live-provider-tool-calling", "suite": "provider-live", "command": "python scripts/provider_harness.py --provider dashscope --model qwen3.7-flash", "requires_api_key": true},
+    {"id": "transactional-changeset", "suite": "changeset", "test": "tests/test_patch_tool_integration.py"},
+    {"id": "durable-recovery", "suite": "durable-recovery", "test": "tests/test_durable_transactions.py"},
+    {"id": "transaction-retention", "suite": "transaction-retention", "test": "tests/test_transaction_retention.py"},
+    {"id": "chunked-backup", "suite": "chunked-backup", "test": "tests/test_backup_store.py"},
+    {"id": "large-file-recovery", "suite": "large-file-recovery", "test": "tests/test_hot_vault_recovery.py"},
+    {"id": "restore-transactions", "suite": "restore-transactions", "test": "tests/test_restore_transactions.py"},
+    {"id": "prompt-checkpoints", "suite": "prompt-checkpoints", "test": "tests/test_prompt_checkpoints.py"},
+    {"id": "stage19-control-plane", "suite": "control-plane", "command": "python -m pytest -q tests/test_lifecycle_hooks.py tests/test_project_instructions.py tests/test_sandbox_credentials.py"},
+    {"id": "stage19-production", "suite": "production-control-plane", "command": "python -m pytest -q tests/test_job_queue.py tests/test_manifest_hooks.py"},
+    {"id": "stage20-ecosystem", "suite": "ecosystem-and-worktrees", "command": "python -m pytest -q tests/test_mcp_client.py tests/test_stage20_components.py"},
+    {"id": "stage21-distribution", "suite": "sdk-protocol-distribution", "command": "python -m pytest -q tests/test_stage21_components.py"},
+    {"id": "interview-closure", "suite": "interview-vertical-closure", "command": "python -m pytest -q tests/test_interview_demo.py tests/test_plugin_activation.py"}
+  ]
+}

@@ -5,13 +5,13 @@ build-backend = "hatchling.build"
 [project]
 name = "miniclaude"
 version = "0.1.0"
-description = "A Claude Code-like AI Coding Agent powered by Anthropic Claude API"
+description = "A replayable multi-provider coding agent with durable recovery and prompt rewind"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
     { name = "MiniClaude Team" },
 ]
-keywords = ["ai", "agent", "coding", "claude", "tool-use"]
+keywords = ["ai", "agent", "coding", "harness", "recovery", "tool-use"]
 
 dependencies = [
     "openai>=1.50.0",
@@ -23,9 +23,25 @@ dependencies = [
     "aiosqlite>=0.20",
     "python-dotenv>=1.0",
     "prompt-toolkit>=3.0",
+    "cryptography>=42.0",
 ]
 
 [project.optional-dependencies]
+credentials = [
+    "keyring>=25.0",
+]
+performance = [
+    "zstandard>=0.23",
+    "fastcdc>=1.7",
+]
+telemetry = [
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp>=1.27",
+]
+desktop = [
+    "pyinstaller>=6.0",
+]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
@@ -34,6 +50,8 @@ dev = [
 
 [project.scripts]
 miniclaude = "miniclaude.__main__:main"
+miniclaude-desktop = "miniclaude.ui.desktop:launch_desktop"
+miniclaude-server = "miniclaude.__main__:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

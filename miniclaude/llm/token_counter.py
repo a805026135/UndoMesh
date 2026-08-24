@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from functools import lru_cache
+from typing import Any
 
 import tiktoken
 
@@ -14,12 +15,30 @@ _FALLBACK_ENCODING = "cl100k_base"
 
 
 @lru_cache(maxsize=4)
-def _get_encoding(model: str = "claude") -> tiktoken.Encoding:
-    """Get tiktoken encoding for approximate token counting."""
+def _get_encoding(model: str = "claude") -> Any | None:
+    """Get an encoding when locally available, without requiring the network.
+
+    ``tiktoken`` may download encoding data on first use. Token counting is a
+    best-effort local estimate, so unavailable encoding data must not make the
+    agent or its offline tests fail.
+    """
     try:
         return tiktoken.encoding_for_model(model)
-    except KeyError:
-        return tiktoken.get_encoding(_FALLBACK_ENCODING)
+    except Exception:
+        try:
+            return tiktoken.get_encoding(_FALLBACK_ENCODING)
+        except Exception as exc:
+            logger.debug("Tokenizer unavailable; using deterministic estimate: %s", exc)
+            return None
+
+
+def _estimate_tokens(text: str) -> int:
+    """Deterministic model-agnostic fallback used when no tokenizer is cached."""
+    if not text:
+        return 0
+    # UTF-8 bytes/4 is a conservative-enough approximation for English while
+    # naturally assigning more weight to CJK text. Always count non-empty text.
+    return max(1, (len(text.encode("utf-8")) + 3) // 4)
 
 
 def count_tokens(text: str, model: str = "claude") -> int:
@@ -35,6 +54,8 @@ def count_tokens(text: str, model: str = "claude") -> int:
     if not text:
         return 0
     enc = _get_encoding(model)
+    if enc is None:
+        return _estimate_tokens(text)
     return len(enc.encode(text))
 
 
@@ -85,6 +106,12 @@ def truncate_to_tokens(text: str, max_tokens: int, model: str = "claude") -> str
     if not text:
         return ""
     enc = _get_encoding(model)
+    if enc is None:
+        if _estimate_tokens(text) <= max_tokens:
+            return text
+        byte_budget = max(0, max_tokens * 4)
+        truncated = text.encode("utf-8")[:byte_budget].decode("utf-8", errors="ignore")
+        return truncated + "\n...[truncated]"
     tokens = enc.encode(text)
     if len(tokens) <= max_tokens:
         return text

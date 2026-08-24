@@ -141,3 +141,10 @@ class Renderer:
             return self.console.input("[bold cyan]❯[/bold cyan] ")
         except EOFError:
             return ""
+
+    def confirm_tool(self, tool_name: str, params: dict[str, Any]) -> bool:
+        """Ask for an explicit one-shot tool approval in the terminal UI."""
+        reason = params.get("_policy_reason", "Permission policy requires confirmation")
+        self.console.print(f"\n[warning]Approval required for {tool_name}: {reason}[/warning]")
+        answer = self.console.input("[bold yellow]Allow once? [y/N][/bold yellow] ").strip().lower()
+        return answer in {"y", "yes"}

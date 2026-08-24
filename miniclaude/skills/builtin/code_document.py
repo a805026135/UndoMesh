@@ -37,7 +37,7 @@ class CodeDocumentSkill(BaseSkill):
                 "编写使用说明",
             ],
             applicable_when="User wants to add or improve code documentation, comments, or type hints",
-            tools_used=["read_file", "write_file", "edit_file", "grep_search", "glob_files"],
+            tools_used=["read_file", "apply_patch_set", "grep_search", "glob_files"],
         )
 
     async def execute(self, context: SkillContext) -> SkillResult:
@@ -45,7 +45,7 @@ class CodeDocumentSkill(BaseSkill):
             skill_name=self.name,
             success=True,
             instructions=self._get_instructions(),
-            suggested_tools=["read_file", "write_file", "edit_file", "grep_search", "glob_files"],
+            suggested_tools=["read_file", "apply_patch_set", "grep_search", "glob_files"],
         )
 
     def _get_instructions(self) -> str:

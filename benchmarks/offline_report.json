@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "tasks": [
+    {
+      "task_id": "runtime",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1382.34
+    },
+    {
+      "task_id": "security",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1289.39
+    },
+    {
+      "task_id": "context",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1258.6
+    },
+    {
+      "task_id": "skill",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1572.99
+    },
+    {
+      "task_id": "multi-agent",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1463.25
+    },
+    {
+      "task_id": "provider",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1883.37
+    },
+    {
+      "task_id": "changeset",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1877.47
+    },
+    {
+      "task_id": "durable-recovery",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 5181.18
+    },
+    {
+      "task_id": "transaction-retention",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 3885.3
+    },
+    {
+      "task_id": "chunked-backup",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 2495.6
+    },
+    {
+      "task_id": "large-file-recovery",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 2304.51
+    },
+    {
+      "task_id": "restore-transactions",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 3331.04
+    },
+    {
+      "task_id": "prompt-checkpoints",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 3709.16
+    },
+    {
+      "task_id": "control-plane",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1322.42
+    },
+    {
+      "task_id": "production-control-plane",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1755.46
+    },
+    {
+      "task_id": "ecosystem-and-worktrees",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 2468.6
+    },
+    {
+      "task_id": "sdk-protocol-distribution",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 1213.98
+    },
+    {
+      "task_id": "interview-vertical-closure",
+      "success": true,
+      "exit_code": 0,
+      "duration_ms": 2859.27
+    }
+  ],
+  "total": 18,
+  "passed": 18,
+  "failed": 0
+}

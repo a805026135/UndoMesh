@@ -39,16 +39,38 @@ class ToolRegistry:
             GrepTool,
         )
         from miniclaude.tools.shell_tools import ShellTool
+        from miniclaude.tools.patch_tools import (
+            ApplyPatchSetTool, RollbackChangeSetTool, PreviewRestoreTransactionsTool,
+            RestoreTransactionsTool, RestoreTransactionStatusTool, AbortRestoreTransactionTool,
+            DeleteFilesTransactionallyTool, ChangeTransactionStatusTool,
+            FinalizeChangeTransactionTool, PinChangeTransactionTool, PruneChangeTransactionsTool,
+            TransactionStorageStatusTool, AuditTransactionRecoveryTool, PurgeLargeBackupCacheTool,
+        )
 
         # File operations
         self.register(ReadFileTool(self.config))
-        self.register(WriteFileTool(self.config))
-        self.register(EditFileTool(self.config))
+        if not self.config.transactional_changes_only:
+            self.register(WriteFileTool(self.config))
+            self.register(EditFileTool(self.config))
         self.register(GlobTool(self.config))
         self.register(GrepTool(self.config))
+        self.register(ApplyPatchSetTool(self.config))
+        self.register(RollbackChangeSetTool(self.config))
+        self.register(PreviewRestoreTransactionsTool(self.config))
+        self.register(RestoreTransactionsTool(self.config))
+        self.register(RestoreTransactionStatusTool(self.config))
+        self.register(AbortRestoreTransactionTool(self.config))
+        self.register(DeleteFilesTransactionallyTool(self.config))
+        self.register(ChangeTransactionStatusTool(self.config))
+        self.register(FinalizeChangeTransactionTool(self.config))
+        self.register(PinChangeTransactionTool(self.config))
+        self.register(PruneChangeTransactionsTool(self.config))
+        self.register(TransactionStorageStatusTool(self.config))
+        self.register(AuditTransactionRecoveryTool(self.config))
+        self.register(PurgeLargeBackupCacheTool(self.config))
 
         # Shell
-        if self.config.allow_shell:
+        if self.config.allow_shell and not self.config.transactional_changes_only:
             self.register(ShellTool(self.config))
 
         logger.info("Registered %d built-in tools.", len(self._tools))

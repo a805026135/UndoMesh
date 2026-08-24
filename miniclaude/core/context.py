@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from miniclaude.core.config import MiniClaudeConfig
+from miniclaude.context.instructions import InstructionBundle, ProjectInstructionLoader
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,8 @@ SYSTEM_PROMPT_TEMPLATE = """You are MiniClaude, an AI coding assistant. You help
 {memory_context}
 
 {skill_context}
+
+{project_instructions}
 """
 
 
@@ -54,6 +57,12 @@ class ConversationContext:
         self.messages: list[dict[str, Any]] = []
         self._memory_context: str = ""
         self._skill_context: str = ""
+        self.instruction_bundle: InstructionBundle = ProjectInstructionLoader(
+            config.effective_project_dir(),
+            user_config_dir=config.instruction_user_config_dir,
+            max_bytes=config.instruction_max_bytes,
+            fallback_names=config.instruction_fallback_name_tuple,
+        ).load()
         self._system_prompt: str = ""
 
     def build_system_prompt(
@@ -67,6 +76,10 @@ class ConversationContext:
         self._system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
             memory_context=memory_context,
             skill_context=skill_context,
+            project_instructions=(
+                "## Project instructions\n" + self.instruction_bundle.content
+                if self.instruction_bundle.content else ""
+            ),
         )
         return self._system_prompt
 

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "suites": [
+    {
+      "name": "swe-bench-verified",
+      "adapter": "swebench.harness.run_evaluation",
+      "dataset": "princeton-nlp/SWE-bench_Verified",
+      "dataset_revision": "pin-before-run",
+      "requires": ["Docker", "dataset checkout", "provider key"]
+    },
+    {
+      "name": "terminal-bench",
+      "adapter": "tb run",
+      "dataset_revision": "pin-before-run",
+      "requires": ["Terminal-Bench CLI", "container runtime", "provider key"]
+    },
+    {
+      "name": "miniclaude-recovery-security",
+      "adapter": "python scripts/run_offline_benchmarks.py",
+      "dataset_revision": "repository commit",
+      "requires": []
+    }
+  ],
+  "reporting_requirements": [
+    "model", "temperature", "tool_set", "permission_mode", "dataset_revision",
+    "attempts", "successes", "token_usage", "cost", "wall_time", "wilson_95_interval"
+  ]
+}

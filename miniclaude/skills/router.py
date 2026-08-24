@@ -19,10 +19,17 @@ class SkillRouter:
     Stage 2 (Rank): Score candidates using semantic relevance and select top-k.
     """
 
-    def __init__(self, catalog: SkillCatalog, recall_top_k: int = 10, rank_top_k: int = 3) -> None:
+    def __init__(
+        self,
+        catalog: SkillCatalog,
+        recall_top_k: int = 10,
+        rank_top_k: int = 3,
+        evidence_store: Any | None = None,
+    ) -> None:
         self.catalog = catalog
         self.recall_top_k = recall_top_k
         self.rank_top_k = rank_top_k
+        self.evidence_store = evidence_store
 
     async def route(self, user_input: str) -> list[BaseSkill]:
         """Route user input to the most relevant skills.
@@ -35,6 +42,11 @@ class SkillRouter:
         """
         if not self.catalog.skill_count:
             return []
+
+        explicit = re.search(r"\$([\w-]+)", user_input)
+        if explicit:
+            selected = self.catalog.get(explicit.group(1))
+            return [selected] if selected else []
 
         # Stage 1: Coarse Recall
         candidates = self._recall(user_input)
@@ -134,7 +146,12 @@ class SkillRouter:
                             intent_bonus += 0.3
                             break
 
-            total_score = base_score + tag_bonus + example_bonus + intent_bonus
+            evidence_bonus = (
+                self.evidence_store.evidence_score(skill.name)
+                if self.evidence_store
+                else 0.0
+            )
+            total_score = base_score + tag_bonus + example_bonus + intent_bonus + evidence_bonus
             scored.append((total_score, skill))
 
         # Sort by score descending

@@ -10,6 +10,20 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+SENSITIVE_PARAM_MARKERS = ("token", "password", "secret", "api_key", "authorization")
+
+
+def _summarize_params(params: dict[str, Any]) -> dict[str, str]:
+    summary: dict[str, str] = {}
+    for key, value in params.items():
+        if any(marker in key.lower() for marker in SENSITIVE_PARAM_MARKERS):
+            summary[key] = "[REDACTED]"
+        elif key.lower() in {"content", "old_string", "new_string"}:
+            summary[key] = f"[CONTENT {len(str(value))} chars]"
+        else:
+            summary[key] = str(value)[:100]
+    return summary
+
 
 class SecurityAuditor:
     """Logs security-relevant events to an audit trail.
@@ -40,7 +54,7 @@ class SecurityAuditor:
             "timestamp": datetime.now().isoformat(),
             "event": "tool_call",
             "tool": tool_name,
-            "params_summary": {k: str(v)[:100] for k, v in params.items()},
+            "params_summary": _summarize_params(params),
             "allowed": allowed,
             "reason": reason,
             "risk_level": risk_level,
@@ -77,7 +91,7 @@ class SecurityAuditor:
             "decision": decision,
         }
         if params:
-            event["params_summary"] = {k: str(v)[:100] for k, v in params.items()}
+            event["params_summary"] = _summarize_params(params)
         self._write_event(event)
 
     def log_policy_violation(

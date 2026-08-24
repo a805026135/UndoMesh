@@ -10,15 +10,15 @@ from pathlib import Path
 
 
 # ── Shared Theme ────────────────────────────────────────────────
-BG       = "#0b0b14"
-FG       = "#e4e4f0"
-FG_DIM   = "#8888aa"
-SURFACE  = "#14142a"
-ELEVATED = "#1e1e3a"
-HOVER    = "#282850"
-ACCENT   = "#7c9aff"
-GREEN    = "#5ee8a0"
-BORDER   = "#222244"
+BG       = "#111210"
+FG       = "#e8e9e4"
+FG_DIM   = "#979991"
+SURFACE  = "#181916"
+ELEVATED = "#22231f"
+HOVER    = "#2b2d28"
+ACCENT   = "#d6ff75"
+GREEN    = "#9fd67a"
+BORDER   = "#30312d"
 
 
 def show_launcher() -> str:
@@ -27,7 +27,7 @@ def show_launcher() -> str:
 
     root = tk.Tk()
     root.title("MiniClaude")
-    root.geometry("500x420")
+    root.geometry("560x430")
     root.resizable(False, False)
     root.configure(bg=BG)
     root.attributes("-topmost", True)
@@ -35,24 +35,24 @@ def show_launcher() -> str:
 
     # Center
     root.update_idletasks()
-    x = (root.winfo_screenwidth() - 500) // 2
-    y = (root.winfo_screenheight() - 420) // 2
-    root.geometry(f"500x420+{x}+{y}")
+    x = (root.winfo_screenwidth() - 560) // 2
+    y = (root.winfo_screenheight() - 430) // 2
+    root.geometry(f"560x430+{x}+{y}")
 
     def on_choose(mode: str) -> None:
         result["choice"] = mode
         root.destroy()
 
     # ── Title ────────────────────────────────────────────────────
-    tk.Label(root, text="MiniClaude", font=("Segoe UI", 30, "bold"),
-             fg=ACCENT, bg=BG).pack(pady=(36, 0))
-    tk.Label(root, text="AI Coding Agent  v0.1.0", font=("Segoe UI", 10),
+    tk.Label(root, text="MiniClaude", font=("Segoe UI", 26, "bold"),
+             fg=FG, bg=BG).pack(pady=(34, 0))
+    tk.Label(root, text="Local coding agent with verifiable recovery", font=("Segoe UI", 10),
              fg=FG_DIM, bg=BG).pack(pady=(4, 0))
 
     # ── Separator ────────────────────────────────────────────────
     tk.Frame(root, bg=BORDER, height=1).pack(fill="x", padx=40, pady=22)
 
-    tk.Label(root, text="Choose a mode", font=("Segoe UI", 11),
+    tk.Label(root, text="Choose your workspace", font=("Segoe UI", 11),
              fg=FG, bg=BG).pack(pady=(0, 18))
 
     # ── Mode Cards ───────────────────────────────────────────────
@@ -86,8 +86,8 @@ def show_launcher() -> str:
             w.bind("<Enter>", enter)
             w.bind("<Leave>", leave)
 
-    make_card(cards, ">_",  "CLI",     "Terminal REPL",   "cli")
-    make_card(cards, "[]",  "Desktop", "GUI client",      "gui")
+    make_card(cards, ">_",  "CLI",     "Fast terminal workflow",   "cli")
+    make_card(cards, "□",  "Desktop", "Tasks, chat and recovery", "gui")
 
     # ── Project dir ──────────────────────────────────────────────
     proj = os.environ.get("MINICLAUDE_PROJECT_DIR", str(Path.cwd()))

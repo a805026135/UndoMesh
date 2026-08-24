@@ -19,6 +19,16 @@ class TestSecurityRules:
         results = rules.check_tool_call("read_file", {"path": str(tmp_project / "hello.py")})
         assert not rules.is_blocked(results)
 
+    def test_similar_prefix_directory_is_outside_boundary(self, tmp_project):
+        rules = SecurityRules()
+        outside = tmp_project.parent / f"{tmp_project.name}-outside" / "file.py"
+        results = rules.check_tool_call(
+            "read_file",
+            {"path": str(outside)},
+            str(tmp_project),
+        )
+        assert rules.is_blocked(results)
+
     def test_dangerous_rm_rf(self):
         rules = SecurityRules()
         results = rules.check_tool_call("run_command", {"command": "rm -rf /"})
@@ -45,6 +55,24 @@ class TestSecurityRules:
         results = rules.check_tool_call("read_file", {"path": "image.png"})
         warnings = rules.get_warnings(results)
         assert len(warnings) > 0
+
+    def test_code_rewind_requires_confirmation(self, tmp_project):
+        rules = SecurityRules()
+        results = rules.check_tool_call(
+            "rewind_checkpoint",
+            {"checkpoint_id": "checkpoint", "mode": "both"},
+            str(tmp_project),
+        )
+        assert rules.get_warnings(results)
+
+    def test_conversation_rewind_is_append_only_and_needs_no_code_confirmation(self, tmp_project):
+        rules = SecurityRules()
+        results = rules.check_tool_call(
+            "rewind_checkpoint",
+            {"checkpoint_id": "checkpoint", "mode": "conversation"},
+            str(tmp_project),
+        )
+        assert not rules.get_warnings(results)
 
 
 class TestPromptGuard:

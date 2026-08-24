@@ -24,7 +24,7 @@ class TestGenSkill(BaseSkill):
                 "write tests for this API endpoint",
             ],
             applicable_when="User wants to create tests for existing code",
-            tools_used=["read_file", "write_file", "grep_search", "run_command"],
+            tools_used=["read_file", "apply_patch_set", "grep_search"],
         )
 
     async def execute(self, context: SkillContext) -> SkillResult:
@@ -68,5 +68,5 @@ def test_descriptive_name():
 - Look for existing test files to match the project's test style and framework
 - Check for existing test infrastructure (conftest.py, fixtures, etc.)
 """,
-            suggested_tools=["read_file", "write_file", "grep_search", "run_command"],
+            suggested_tools=["read_file", "apply_patch_set", "grep_search"],
         )

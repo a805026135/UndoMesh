@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from miniclaude.core.config import MiniClaudeConfig
+from miniclaude.execution.paths import resolve_within_roots
 from miniclaude.tools.base import BaseTool, ToolResult
 
 logger = logging.getLogger(__name__)
@@ -17,12 +18,8 @@ logger = logging.getLogger(__name__)
 
 def _resolve_path(path: str, config: MiniClaudeConfig) -> Path:
     """Resolve and validate a file path against the project boundary."""
-    p = Path(path).resolve()
     project_dir = config.effective_project_dir()
-    # Allow absolute paths within project, or resolve relative to project
-    if not p.is_relative_to(project_dir) and not path.startswith("/"):
-        p = (project_dir / path).resolve()
-    return p
+    return resolve_within_roots(path, base=project_dir, roots=(project_dir,))
 
 
 class ReadFileTool(BaseTool):
@@ -266,7 +263,7 @@ class GlobTool(BaseTool):
         pattern = kwargs.get("pattern", "")
         search_path = kwargs.get("path", "")
 
-        base = Path(search_path).resolve() if search_path else self._config.effective_project_dir()
+        base = _resolve_path(search_path or ".", self._config)
 
         if not base.exists():
             return self._error(f"Directory not found: {base}")
@@ -346,7 +343,7 @@ class GrepTool(BaseTool):
         file_glob = kwargs.get("glob", "")
         case_insensitive = kwargs.get("case_insensitive", False)
 
-        base = Path(search_path).resolve() if search_path else self._config.effective_project_dir()
+        base = _resolve_path(search_path or ".", self._config)
 
         if not base.exists():
             return self._error(f"Directory not found: {base}")

@@ -5,11 +5,41 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from miniclaude.core.config import MiniClaudeConfig, reset_config
+from miniclaude.llm.client import LLMResponse
+
+
+class ScriptedLLMClient:
+    """Deterministic offline LLM double for query-loop integration tests."""
+
+    def __init__(self, responses: list[LLMResponse | BaseException]) -> None:
+        self._responses = list(responses)
+        self.requests: list[dict[str, Any]] = []
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
+
+    @property
+    def total_tokens(self) -> int:
+        return self.total_input_tokens + self.total_output_tokens
+
+    async def chat(self, **kwargs: Any) -> LLMResponse:
+        self.requests.append(kwargs)
+        if not self._responses:
+            raise AssertionError("ScriptedLLMClient received an unexpected request")
+        item = self._responses.pop(0)
+        if isinstance(item, BaseException):
+            raise item
+        self.total_input_tokens += item.input_tokens
+        self.total_output_tokens += item.output_tokens
+        return item
+
+    async def close(self) -> None:
+        return None
 
 
 @pytest.fixture

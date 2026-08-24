@@ -1,0 +1,28 @@
+name: desktop-release
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e ".[desktop]"
+      - run: python scripts/release_check.py
+      - run: python scripts/build_desktop.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MiniClaude-${{ matrix.os }}-unsigned
+          path: dist/
+      # Publishing is intentionally separate: a release job must download these
+      # artifacts, sign/notarize them with platform identities, generate the
+      # Ed25519 update envelope, and only then attach them to a GitHub Release.

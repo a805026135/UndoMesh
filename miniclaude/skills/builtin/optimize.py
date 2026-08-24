@@ -34,7 +34,7 @@ class CodeOptimizeSkill(BaseSkill):
                 "减少内存占用",
             ],
             applicable_when="User wants to improve code performance, reduce latency, or optimize resource usage",
-            tools_used=["read_file", "write_file", "edit_file", "grep_search", "glob_files", "run_command"],
+            tools_used=["read_file", "apply_patch_set", "grep_search", "glob_files"],
         )
 
     async def execute(self, context: SkillContext) -> SkillResult:
@@ -159,5 +159,5 @@ optimized_time = time.perf_counter() - start
 print(f"Speedup: {original_time/optimized_time:.2f}x")
 ```
 """,
-            suggested_tools=["read_file", "write_file", "edit_file", "grep_search", "glob_files", "run_command"],
+            suggested_tools=["read_file", "apply_patch_set", "grep_search", "glob_files"],
         )

@@ -794,6 +794,16 @@ async def check(self, tool_name, params, user_input):
 
 ## 附录：测试覆盖
 
+### v0.2 Runtime 增量（阶段 5–7）
+
+- `runtime/` 使用 append-only 事件作为会话事实源，并可投影、回放和 Fork；
+- `context/event_compactor.py` 只压缩已闭合事件区域，摘要在原区域位置投影，原始事件永久保留；
+- `skills/evolution.py` 保存版本与执行证据，通过成功率、安全和 token 门槛控制晋升，支持禁用和回滚；
+- `agents/contracts.py` 与 `agents/scheduler.py` 使用依赖图、读写集合、token/deadline 和隔离工作区约束子任务；
+- `Orchestrator.execute_contracts()` 是约束调度进入真实多 Agent 执行链路的入口。
+
+当前离线回归为 201 passed、1 skipped，固定 Benchmark 为 18/18 套件。恢复优先的 Change/Restore 双事务、Warm/Hot 分层与 Prompt Rewind 是核心；阶段 19–21 不再停留于孤立适配器：Restore/Rewind/Audit 通过持久单写者 Job 执行并产生脱敏 Telemetry，受信 Plugin 将 Hook/MCP 激活与显式 Capability 批准绑定，Worktree 候选通过验证后以 Diff SHA-256 绑定 Review 和最终合并。`scripts/demo_interview.py` 无需 Key 即可真实演示成功恢复、冲突拒绝和确定性合并。系统仍不宣称外部副作用普遍回滚、Windows 文件/网络隔离、平台证书签名或尚未实跑的标准 Benchmark 成绩。
+
 | 测试文件 | 测试数 | 覆盖范围 |
 |---------|--------|---------|
 | `test_tools.py` | 18 | 文件读写、编辑、搜索、Shell 执行、安全命令拦截 |

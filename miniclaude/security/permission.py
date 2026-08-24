@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import logging
+import hashlib
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable
 
 from miniclaude.core.config import MiniClaudeConfig
@@ -109,12 +112,18 @@ class PermissionManager:
                 )
 
         # Layer 4: Confirmation check
-        needs_confirm = self._needs_confirmation(tool_name, params, risk_level)
+        needs_confirm = self._needs_confirmation(
+            tool_name,
+            params,
+            risk_level,
+            has_warnings=bool(self.rules.get_warnings(rule_results)),
+        )
 
         if needs_confirm:
             # Check cache (previously approved)
-            cache_key = f"{tool_name}:{str(params)[:200]}"
-            if cache_key in self._allowed_cache:
+            cache_key = self._cache_key(tool_name, params)
+            one_time_approval = tool_name in {"purge_large_backup_cache", "rewind_checkpoint"}
+            if not one_time_approval and cache_key in self._allowed_cache:
                 return PermissionResult(
                     allowed=True,
                     message="Previously approved",
@@ -126,7 +135,8 @@ class PermissionManager:
             if self._confirm_callback:
                 approved = self._confirm_callback(tool_name, params)
                 if approved:
-                    self._allowed_cache.add(cache_key)
+                    if not one_time_approval:
+                        self._allowed_cache.add(cache_key)
                     return PermissionResult(
                         allowed=True,
                         message="User approved",
@@ -165,30 +175,56 @@ class PermissionManager:
         tool_name: str,
         params: dict[str, Any],
         risk_level: RiskLevel,
+        has_warnings: bool = False,
     ) -> bool:
         """Determine if a tool call needs user confirmation."""
-        # Always confirm shell commands
-        if tool_name == "run_command" and self.config.confirm_dangerous:
+        # Confirm shell commands when deterministic rules found a warning.
+        if tool_name == "run_command" and self.config.confirm_dangerous and has_warnings:
             return True
 
         # Confirm high-risk operations
         if risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL):
             return True
 
+        if has_warnings:
+            return True
+
         # Confirm writes outside project directory
-        if tool_name in ("write_file", "edit_file"):
+        if tool_name in ("write_file", "edit_file", "apply_patch_set", "rollback_change_set"):
             path = params.get("path", "")
             project = str(self.config.effective_project_dir())
-            if path and project and not str(path).startswith(project):
-                return True
+            if path and project:
+                try:
+                    Path(path).resolve(strict=False).relative_to(
+                        Path(project).resolve(strict=False)
+                    )
+                except ValueError:
+                    return True
 
         return False
 
     def approve_cached(self, tool_name: str, params: dict[str, Any]) -> None:
         """Pre-approve a tool call (add to cache)."""
-        cache_key = f"{tool_name}:{str(params)[:200]}"
-        self._allowed_cache.add(cache_key)
+        self._allowed_cache.add(self._cache_key(tool_name, params))
 
     def clear_cache(self) -> None:
         """Clear the approval cache."""
         self._allowed_cache.clear()
+
+    def request_confirmation(
+        self,
+        tool_name: str,
+        params: dict[str, Any],
+        reason: str,
+    ) -> bool:
+        """Request an explicit decision for another deterministic policy layer."""
+        if not self._confirm_callback:
+            return False
+        approval_params = {**params, "_policy_reason": reason}
+        return bool(self._confirm_callback(tool_name, approval_params))
+
+    @staticmethod
+    def _cache_key(tool_name: str, params: dict[str, Any]) -> str:
+        canonical = json.dumps(params, sort_keys=True, ensure_ascii=False, default=str)
+        digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+        return f"{tool_name}:{digest}"

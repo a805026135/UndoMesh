@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-22",
+  "command": "python -m pytest -q",
+  "offline_tests_passed": 94,
+  "offline_tests_failed": 0,
+  "demo_command": "python scripts/demo_offline.py",
+  "demo_expected": {
+    "fork": "demo-fork",
+    "side_effects": false,
+    "security_decision": "deny"
+  },
+  "provider_presets": ["openai", "deepseek", "anthropic", "gemini", "dashscope", "kimi", "custom"],
+  "performance_claims": [],
+  "claim_boundary": "Offline harness verification only; no real-model quality or cost claim."
+}

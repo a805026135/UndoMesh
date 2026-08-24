@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "generated_by": "tests/test_skill_evolution.py",
+  "evaluation_mode": "deterministic_offline",
+  "candidate": {
+    "evaluations": 3,
+    "success_rate": 1.0,
+    "average_tokens": 100.0,
+    "baseline_success_rate": 0.9,
+    "baseline_average_tokens": 100.0,
+    "decision": "promote"
+  },
+  "safety_regression_candidate": {
+    "evaluations": 3,
+    "safety_failures": 3,
+    "decision": "reject"
+  },
+  "claim_boundary": "Harness gate validation only; not a real-model quality benchmark."
+}

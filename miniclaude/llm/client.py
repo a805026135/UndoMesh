@@ -5,12 +5,14 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
 import openai
 
 from miniclaude.core.config import get_config, MiniClaudeConfig
+from miniclaude.llm.diagnostics import ConnectionDiagnostic, ConnectionStatus, classify_connection_error
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +51,48 @@ class ClaudeClient:
         self.config = config or get_config()
         self._client = openai.AsyncOpenAI(
             api_key=self.config.api_key,
-            base_url=self.config.api_base_url,
+            base_url=self.config.effective_api_base_url,
         )
         self._total_input_tokens = 0
         self._total_output_tokens = 0
+
+    async def test_connection(self) -> LLMResponse:
+        """Make one minimal inference to verify endpoint, key, and model together."""
+        return await self.chat(
+            messages=[{"role": "user", "content": "Reply with OK."}],
+            max_tokens=8,
+            temperature=0,
+        )
+
+    async def diagnose_connection(self) -> ConnectionDiagnostic:
+        """Return a redacted, actionable result instead of leaking provider errors."""
+        started = time.perf_counter()
+        try:
+            response = await self.test_connection()
+            return ConnectionDiagnostic(
+                True, ConnectionStatus.OK, self.config.provider, self.config.model,
+                self.config.effective_api_base_url,
+                round((time.perf_counter() - started) * 1000, 2),
+                (response.text or "Connected")[:120],
+            )
+        except Exception as exc:
+            status, message = classify_connection_error(exc)
+            return ConnectionDiagnostic(
+                False, status, self.config.provider, self.config.model,
+                self.config.effective_api_base_url,
+                round((time.perf_counter() - started) * 1000, 2), message,
+            )
+
+    async def reconfigure(self, config: MiniClaudeConfig) -> None:
+        """Replace transport settings without rebuilding the Agent runtime."""
+        replacement = openai.AsyncOpenAI(
+            api_key=config.api_key,
+            base_url=config.effective_api_base_url,
+        )
+        old = self._client
+        self.config = config
+        self._client = replacement
+        await old.close()
 
     async def chat(
         self,

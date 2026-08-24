@@ -32,7 +32,7 @@ class CodeGenSkill(BaseSkill):
                 "write a configuration file parser",
             ],
             applicable_when="User wants to generate new code based on requirements or specifications",
-            tools_used=["write_file", "read_file", "grep_search"],
+            tools_used=["apply_patch_set", "read_file", "grep_search"],
         )
 
     async def execute(self, context: SkillContext) -> SkillResult:
@@ -104,5 +104,5 @@ List any required imports or dependencies.
 - Ensure proper error handling
 - Validate edge cases
 """,
-            suggested_tools=["write_file", "read_file", "grep_search"],
+            suggested_tools=["apply_patch_set", "read_file", "grep_search"],
         )

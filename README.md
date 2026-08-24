@@ -1,10 +1,10 @@
 # MiniClaude
 
-> 参考 Claude Code 架构设计并实现的 AI Coding Agent，基于 **Query Loop + Tool Use** 构建任务执行闭环。
+> 面向可审计长任务的轻量 AI Coding Agent，以 **Query Loop + Tool Use** 构建执行闭环，以分层恢复事务与安全 Rewind 形成自己的核心差异。
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Model-MiMo--v2.5--Pro-9B59B6" alt="Model">
+  <img src="https://img.shields.io/badge/Model-Multi--Provider-555555" alt="Multi-provider">
   <img src="https://img.shields.io/badge/Architecture-Agent--Tool--Use-2ECC71" alt="Architecture">
   <img src="https://img.shields.io/badge/License-MIT-blue" alt="License">
 </p>
@@ -15,6 +15,19 @@
   &nbsp;&nbsp;
   <img src="docs/screenshot_desktop.png" width="560" alt="Desktop GUI">
 </p>
+
+---
+
+## 项目材料
+
+- [简历项目描述](docs/RESUME_PROJECT.md)：完整版、一页压缩版、30 秒口述版及表述边界
+- [完整项目介绍](docs/PROJECT_INTRODUCTION.md)：从设计动机、架构、状态机到运行验证
+- [竞品对标分析](docs/COMPETITIVE_ANALYSIS.md)：Codex、Claude Code、DeepSeek Harness 的公开能力与补充路线
+- [面试 QA](docs/INTERVIEW_QA.md)：100 个架构、安全、恢复、性能和边界问题
+- [系统审计](docs/SYSTEM_AUDIT.md)：当前质量证据、已知限制和生产化优先级
+- [项目指令、Hook 与沙箱](docs/PROJECT_INSTRUCTIONS_AND_HOOKS.md)：Stage 19 控制面语义与安全边界
+- [阶段 19–21 实现与边界](docs/STAGES_19_21_IMPLEMENTATION.md)：App Server、MCP、Worktree、SDK、评测与分发
+- [面试现场演示](docs/INTERVIEW_DEMO.md)：无需 Key 的恢复、冲突拒绝与 Worktree 摘要合并闭环
 
 ---
 
@@ -68,6 +81,24 @@
 
 ## 二、关键技术
 
+### 核心亮点：可恢复的代码变更事务
+
+MiniClaude 默认不把模型修改直接写入工作区。`apply_patch_set` 先为所有旧/新路径建立 SHA-256 内容寻址备份和持久化 Journal，再把补丁放入隔离副本验证；只有目标文件仍与准备时一致才会进入提交。创建、修改、删除和重命名都产生带完整状态历史的事务收据。
+
+提交前的冲突检测与写入由跨进程锁串行化；进程若在多文件提交中途退出，下次启动会根据 `committing` Journal 恢复全部 preimage。若现场内容既不是 preimage 也不是 postimage，则进入 `recovery_conflicted` 并保留用户内容，不盲目覆盖。`rollback_change_set` 仅在不会覆盖用户后续修改时回退，`change_transaction_status` 可查询验证证据、冲突和恢复记录。默认 Registry 不注册直接 `write_file`、`edit_file` 和 Shell 写入旁路；需要兼容旧行为时才显式关闭事务模式。详细协议与边界见 `docs/DURABLE_CHANGE_TRANSACTIONS.md`。
+
+回退数据采用共享感知的 Mark-and-Sweep 生命周期：已提交事务默认保留 30 天，其他终态保留 7 天，活跃/恢复冲突/固定事务不会自动过期；过期 blob 先进入 trash，宽限 1 天后才解除链接。用户可先 dry-run 查看影响，再验收、固定或清理。2 GiB 硬预算不会通过牺牲未到期回退窗口来腾空间，无法安全回收时新事务会在修改工作区前失败。详见 `docs/TRANSACTION_RETENTION.md`。
+
+2 GiB 区域现在使用 Gear 内容定义分块（16/64/256 KiB）、跨文件/跨版本块去重、按块条件 zlib 压缩和 AES-256-GCM 认证加密。恢复时逐块认证、限界解压、校验块哈希，重组后再校验完整文件 SHA-256；旧版 raw blob 保持可读。`transaction_storage_status` 可查看逻辑容量、物理容量、压缩率和去重收益。详见 `docs/CHUNKED_BACKUP_STORE.md`。
+
+超大文件不会硬塞进 2 GiB 普通回退区。默认 256 MiB 以上文件由 `delete_files_transactionally` 流式写入独立的 24 小时加密热备区；容量或磁盘余量不足时删除会在修改原文件前失败。恢复使用临时文件、逐块认证、整文件哈希与替换后复核。`audit_transaction_recovery` 可在不写工作区的情况下报告 `available/conflicted/expired/corrupt`；提前永久清理热备必须先获取绑定事务、摘要和字节数的预览令牌，再接受一次不可缓存的人工审批。详见 `docs/LARGE_FILE_RECOVERY_VAULT.md`。
+
+恢复本身也是一等事务：多笔变更先形成连续依赖闭包，通过 warm/hot 租约阻止 GC，在完整认证、物化和二次冲突检查后才提交；中断可补偿，未知现场进入冲突态并保留租约。原变更收据保持 committed，恢复产生独立可审计收据。每个用户 Prompt 同时是 Checkpoint，支持 code、conversation、both、summary 四种 Rewind；CLI 与桌面 Recovery Center 都会先显示健康状态和影响范围。详见 `docs/RESTORE_TRANSACTIONS.md`、`docs/PROMPT_CHECKPOINTS.md` 和 `docs/DESKTOP_CLIENT.md`。
+
+### 2.0 BYOK 多模型配置
+
+桌面工具栏的 **Model** 面板支持 OpenAI、DeepSeek、Anthropic、Gemini、阿里云百炼、Kimi/Moonshot 和自定义 OpenAI-compatible 服务。用户可以选择模型、填写 API Key、覆盖 Base URL，并用一次最小推理测试 Key、模型和端点是否同时可用。Provider/model/Base URL 可持久化，API Key 只驻留当前进程，不进入普通配置、事件或审计日志。详见 `docs/MODEL_PROVIDERS.md`。
+
 ### 2.1 Skill 分层路由 — 二阶段召回 + 精排
 
 **问题**：Skill 数量增长后，全量注入 system prompt 会导致检索噪声大、Token 浪费严重。
@@ -90,12 +121,14 @@
 注入 system prompt 的 Skill 使用指南
 ```
 
-**评分公式**：`score = base_score + tag_bonus + example_bonus + intent_bonus`
+**评分公式**：`score = base_score + tag_bonus + example_bonus + intent_bonus + evidence_bonus`
+
+Skill 现已接入 Query Loop，并使用 SQLite 保存候选、正式和废弃版本。候选版本只有在固定评测达到成功率、安全与 token 成本门槛后才能晋升；支持显式 `$skill-name`、禁用和回滚。系统不会让自动生成内容直接覆盖正式 Skill。
 
 **三层架构**：
 | 层级 | 内容 | 数量 | 注入方式 |
 |------|------|------|----------|
-| Atomic Tools | `read_file`, `write_file`, `grep_search` ... | 9 | 始终注入 |
+| Atomic Tools | `read_file`, `grep_search`, `apply_patch_set` ... | 9 | 按权限注入；默认修改必须走事务 |
 | High-level Skills | `code_review`, `refactor`, `debug` ... | 9 | 按需路由注入 |
 | Skill Catalog | 元信息索引（标签、示例、适用边界） | - | 路由查询用 |
 
@@ -150,7 +183,7 @@
 
 **问题**：长对话下上下文窗口溢出，导致 LLM 无法有效利用历史信息。
 
-**方案**：构建四层压缩策略，在 Token 耗尽前逐步降级。
+**方案**：以 append-only 运行时事件为事实源，在 Token 耗尽前压缩已闭合步骤。模型 Surface 使用结构化摘要替换旧区域，但原始事件不删除；Tool Call 与 Result 按完整步骤成对保留或成对压缩，provider overflow 只在压缩确有推进时重试。
 
 ```
 Token 使用率
@@ -186,7 +219,7 @@ len(content) > 2000 ?
 
 ---
 
-### 2.4 中心化多 Agent 协作
+### 2.4 约束驱动多 Agent 协作
 
 **问题**：复杂任务需要多种专业能力，单 Agent 难以胜任。
 
@@ -218,6 +251,9 @@ len(content) > 2000 ?
 - 子 Agent 不继承主 Agent 的对话上下文
 - 工具白名单限制，路径边界约束
 - 结果经过压缩后返回主 Agent
+- 每个子任务声明依赖、读写集合、预期产物、验证命令、token 预算和 deadline
+- 无冲突任务可并行，重叠写集合自动串行；写任务可运行在隔离副本
+- 父任务取消会通过结构化并发传播到运行中的子任务
 
 ---
 
@@ -439,6 +475,25 @@ python -m miniclaude --gui  # 直接进入桌面 GUI
 | `MINICLAUDE_MEMORY_ENABLED` | `true` | 是否启用记忆系统 |
 | `MINICLAUDE_ALLOW_SHELL` | `true` | 是否允许 Shell 命令 |
 | `MINICLAUDE_CONFIRM_DANGEROUS` | `true` | 危险操作是否需要确认 |
+| `MINICLAUDE_SANDBOX_BACKEND` | `process` | Shell 隔离后端：`process`、`auto` 或 Linux `bubblewrap` |
+| `MINICLAUDE_SANDBOX_NETWORK_ENABLED` | `false` | OS 沙箱内是否开放网络；默认断网 |
+| `MINICLAUDE_TRANSACTIONAL_CHANGES_ONLY` | `true` | 禁止直接写/编辑/Shell 旁路，修改必须走事务 |
+| `MINICLAUDE_TRANSACTION_COMMITTED_RETENTION_DAYS` | `30` | 已提交事务回退窗口 |
+| `MINICLAUDE_TRANSACTION_TERMINAL_RETENTION_DAYS` | `7` | 拒绝/冲突/已回退事务备份窗口 |
+| `MINICLAUDE_TRANSACTION_TRASH_GRACE_DAYS` | `1` | 进入 trash 后的删除宽限期 |
+| `MINICLAUDE_TRANSACTION_MAX_BACKUP_BYTES` | `2147483648` | blob 与 trash 总容量硬上限 |
+| `MINICLAUDE_TRANSACTION_PRUNE_INTERVAL_HOURS` | `6` | 长时间运行时的定期清理间隔 |
+| `MINICLAUDE_TRANSACTION_BACKUP_ENCRYPTION` | `true` | 使用 AES-256-GCM 加密备份块 |
+| `MINICLAUDE_TRANSACTION_BACKUP_KEY` | 空 | 可选外部 32 字节 hex/base64 密钥；空则生成本地密钥 |
+| `MINICLAUDE_TRANSACTION_HOT_THRESHOLD_BYTES` | `268435456` | 进入独立超大文件热备区的阈值 |
+| `MINICLAUDE_TRANSACTION_HOT_TTL_HOURS` | `24` | 超大文件默认恢复窗口 |
+| `MINICLAUDE_TRANSACTION_HOT_MAX_BACKUP_BYTES` | `53687091200` | 热备区物理容量上限 |
+| `MINICLAUDE_TRANSACTION_HOT_MINIMUM_FREE_BYTES` | `2147483648` | 备份完成后必须保留的磁盘余量 |
+| `MINICLAUDE_EVENT_DB` | `data/runtime/events.db` | append-only 运行时事件库 |
+| `MINICLAUDE_SKILL_EVAL_DB` | `data/skills/evaluations.db` | Skill 版本与评测证据库 |
+| `MINICLAUDE_INSTRUCTION_MAX_BYTES` | `32768` | 分层项目指令总字节预算 |
+| `MINICLAUDE_INSTRUCTION_FALLBACK_NAMES` | 空 | 额外项目指令文件名，逗号分隔 |
+| `MINICLAUDE_INSTRUCTION_USER_DIR` | `~/.miniclaude` | 用户级指令目录 |
 
 ---
 
@@ -450,13 +505,34 @@ python -m pytest tests/ -v
 ```
 
 ```
-tests/test_tools.py     ✓ 18 tests  (文件工具 / Shell 工具)
-tests/test_memory.py    ✓  8 tests  (记忆存储 / 检索)
-tests/test_context.py   ✓  4 tests  (Token 预算 / 外置化 / 压缩)
-tests/test_security.py  ✓ 12 tests  (规则过滤 / Prompt 注入防御)
-──────────────────────────────────
-Total: 42 passed
+201 passed, 1 skipped（离线回归，2026-08-24）
 ```
+
+新增回归覆盖事件生命周期与持久化、回放/Fork、来源追踪与敏感数据脱敏、上下文 overflow 恢复、Skill 晋升/拒绝/回滚，以及依赖和写集合约束调度。该数字来自 `python -m pytest -q`；阶段 8 前不声明真实模型质量或性能提升。
+
+阶段 6–7 的机器可读离线证据位于 `benchmarks/stage6_skill_report.json` 和 `benchmarks/stage7_scheduler_report.json`。报告只声明门禁与调度行为：无冲突写任务观测并发度为 2，冲突写任务为 1；不把合成用例包装成真实模型性能数据。
+
+阶段 8 的复现入口为 `benchmarks/tasks.json`、`benchmarks/stage8_release_report.json` 和 `python scripts/demo_offline.py`。架构、威胁模型、事件协议、回放、Skill、多 Agent、模型配置与发布限制均在 `docs/` 中独立记录。
+
+阶段 9 增加 `scripts/provider_harness.py`：它只读取固定无敏感夹具，验证真实 Provider 的两轮工具调用闭环，并输出不含 Key 的 JSON。2026-08-22 使用百炼 `qwen3.7-flash` 实测成功；证据见 `benchmarks/stage9_qwen37_flash_report.json`。单次冒烟只证明当时的协议兼容性。
+
+阶段 10–12 进一步加入子进程敏感环境变量净化、可选 OS Keyring、沙箱能力探测、安全 Git PatchSet、验证证据、发布检查和 Windows/Linux CI。默认 Windows 执行仍是应用层进程隔离，不宣称完整 OS 沙箱。
+
+阶段 13 将 `apply_patch_set` 接入真实工具链：Patch 经过 capability、权限、来源和敏感路径审查，验证失败会恢复全部触及文件。验证命令采用 allowlist 且不经过 Shell；工具不会自动提交、推送或合并分支。
+
+阶段 14 将回退升级为默认变更协议：隔离 staging、内容寻址 pre/postimage、原子 Journal、跨进程提交锁、乐观冲突检测、启动恢复和可审计事务收据。故障注入覆盖删除、创建、重命名、提交中断、用户后续修改、越界事务 ID、符号链接父路径及凭据净化；固定离线 Benchmark 为 8/8 套件通过。多文件提交是崩溃可恢复而非全局原子，外部副作用和 ACL/xattr 不在保证范围内。
+
+阶段 15 增加回退数据生命周期：显式验收与固定、状态保护、共享 blob 可达性回收、dry-run、两阶段 trash、孤儿宽限、2 GiB 预算及人工确认。Journal 在 blob 过期后仍保留审计哈希并明确标记 `rollback_available=false`；物理 unlink 不宣称 SSD、快照或云同步环境下的取证级安全擦除。固定离线 Benchmark 为 9/9 套件通过。
+
+阶段 16 将 2 GiB 回退区升级为压缩、分块去重和认证加密的内容仓库，并加入六小时定时清理和重要度/日期排序。固定离线 Benchmark 为 10/10。Claude Code `/rewind` 的公开 checkpoint 语义及 MiniClaude 的下一步映射见 `docs/CLAUDE_REWIND_COMPARISON.md`；不宣称掌握 Claude Code 私有实现源码。
+
+阶段 17A 增加流式备份/恢复、独立 24 小时超大文件热备区、事务化二进制删除、恢复后完整哈希复核、只读恢复健康审计，以及绑定精确范围且每次都需人工审批的永久热备清理。固定离线 Benchmark 为 11/11。热备 unlink 不宣称取证级安全擦除，Python 内容定义分块的多 GB 吞吐仍有优化空间；恢复租约和独立补偿事务已在后续阶段完成。
+
+阶段 17B–18 增加恢复租约、独立补偿事务、启动崩溃补偿、冲突租约人工释放、Prompt Checkpoint 与四模式 Rewind，并将能力接入 REPL、非交互 CLI 和三栏桌面客户端 Recovery Center。固定离线 Benchmark 为 13/13。
+
+阶段 19 首批能力增加用户/仓库/子目录/override 分层项目指令、来源与预算诊断、单调收紧的 Lifecycle Hook Bus，以及可替换 Shell 沙箱接口。Linux 可显式选择 Bubblewrap，使项目目录保持可写、宿主文件系统只读且默认断网；Windows 和默认配置仍为进程组隔离。固定离线 Benchmark 为 14/14。
+
+阶段 19–21 后续核心已加入持久 App Server/单写者任务队列、Manifest 认证与密钥轮换、Windows Job Object 资源限制、可信非执行 Hook、MCP、脱敏 Telemetry、真实 Git Worktree、桌面 Diff Review、可选 FastCDC/Zstandard、Python SDK、JSON-RPC/ACP、Plugin Manifest、受控 Tool Program、标准评测描述及 Ed25519 更新制品。恢复/Rewind/审计已进入后台 Job，Plugin→Hook/MCP→Capability 与 Worktree→验证→Diff 摘要→合并形成纵向闭环；固定离线 Benchmark 为 18/18。平台证书签名、Windows 文件/网络隔离及 SWE-bench/Terminal-Bench 实跑仍只提供入口，不声明已经取得外部验证结果。
 
 ---
 

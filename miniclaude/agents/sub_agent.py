@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from miniclaude.core.config import MiniClaudeConfig
+from miniclaude.execution.capabilities import CapabilitySet, ToolExecutionContext
+from miniclaude.security.permission import PermissionManager
 from miniclaude.llm.client import ClaudeClient, LLMResponse
 from miniclaude.llm.message_builder import MessageBuilder
 from miniclaude.tools.base import ToolResult
@@ -83,7 +85,7 @@ AGENT_PROFILES = {
             "and create comprehensive test suites. Use pytest style. "
             "Cover happy paths, edge cases, and error scenarios."
         ),
-        "allowed_tools": ["read_file", "write_file", "glob_files", "grep_search"],
+        "allowed_tools": ["read_file", "apply_patch_set", "rollback_change_set", "change_transaction_status", "glob_files", "grep_search"],
         "description": "Generates comprehensive test suites",
     },
     "refactor_expert": {
@@ -93,7 +95,7 @@ AGENT_PROFILES = {
             "without changing behavior. Apply clean code principles and design patterns. "
             "Make one change at a time and preserve existing functionality."
         ),
-        "allowed_tools": ["read_file", "write_file", "edit_file", "grep_search", "glob_files"],
+        "allowed_tools": ["read_file", "apply_patch_set", "rollback_change_set", "change_transaction_status", "grep_search", "glob_files"],
         "description": "Refactors code with clean code principles",
     },
     "debug_specialist": {
@@ -103,7 +105,7 @@ AGENT_PROFILES = {
             "trace execution paths, and identify root causes. "
             "Be systematic: reproduce, investigate, hypothesize, fix, verify."
         ),
-        "allowed_tools": ["read_file", "grep_search", "glob_files", "run_command"],
+        "allowed_tools": ["read_file", "grep_search", "glob_files"],
         "description": "Systematically debugs errors and issues",
     },
 }
@@ -195,7 +197,17 @@ class SubAgent:
 
             # Execute tools (reusing the main executor with filtered tools)
             from miniclaude.core.tool_executor import ToolExecutor
-            executor = ToolExecutor(self.tool_registry, self.config)
+            capabilities = CapabilitySet.for_project(
+                self.config.effective_project_dir(),
+                set(self.allowed_tools),
+                shell_enabled="run_command" in self.allowed_tools,
+            )
+            executor = ToolExecutor(
+                self.tool_registry,
+                self.config,
+                permission_manager=PermissionManager(self.config),
+                default_capabilities=capabilities,
+            )
 
             # Add assistant message
             assistant_msg = MessageBuilder.build_assistant_with_tool_use(
@@ -204,11 +216,18 @@ class SubAgent:
             self._messages.append(assistant_msg)
 
             # Execute and add results
-            tool_results = await executor.execute_all(response.tool_calls)
+            tool_results = await executor.execute_all(
+                response.tool_calls,
+                ToolExecutionContext(
+                    agent_id=self.name,
+                    user_input=task,
+                    capability_set=capabilities,
+                ),
+            )
             result_msg = MessageBuilder.tool_results_to_message(
                 response.tool_calls, tool_results
             )
-            self._messages.append(result_msg)
+            self._messages.extend(result_msg[1:])
 
         else:
             result.success = False

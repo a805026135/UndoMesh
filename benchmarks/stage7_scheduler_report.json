@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "generated_by": "tests/test_contract_scheduler.py",
+  "evaluation_mode": "deterministic_offline",
+  "non_overlapping_writes": {
+    "tasks": 2,
+    "observed_max_concurrency": 2,
+    "advantage_over_fixed_sequential": "one dependency wave instead of two"
+  },
+  "overlapping_writes": {
+    "tasks": 2,
+    "observed_max_concurrency": 1,
+    "explicit_cost": "parallelism is sacrificed to prevent a write conflict"
+  },
+  "claim_boundary": "Scheduling behavior only; token and model-quality comparison is deferred to stage 8."
+}

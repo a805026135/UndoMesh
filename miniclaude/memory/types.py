@@ -28,3 +28,11 @@ class RiskLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
+    @classmethod
+    def from_str(cls, value: str) -> "RiskLevel":
+        """Parse classifier output, defaulting unknown values to LOW."""
+        try:
+            return cls(value.lower())
+        except ValueError:
+            return cls.LOW

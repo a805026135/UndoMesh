@@ -60,6 +60,10 @@ class SecurityRules:
             SensitiveFileRule(),
             BinaryFileRule(),
             SizeLimitRule(),
+            ChangeSetRule(),
+            TransactionalDeleteRule(),
+            CheckpointRewindRule(),
+            TransactionRetentionRule(),
         ]
 
 
@@ -111,15 +115,15 @@ class PathBoundaryRule(SecurityRule):
         # Check project boundary (if configured)
         if project_dir:
             from pathlib import Path
-            resolved = Path(path).resolve()
-            project = Path(project_dir).resolve()
-            if not str(resolved).startswith(str(project)):
-                # Allow with warning
+            from miniclaude.execution.paths import canonical_path, is_within
+            project = Path(project_dir).resolve(strict=False)
+            resolved = canonical_path(path, base=project)
+            if not is_within(resolved, (project,)):
                 return RuleResult(
-                    passed=True,
+                    passed=False,
                     rule_name="path_boundary",
                     message=f"Path is outside project directory: {path}",
-                    severity="warning",
+                    severity="error",
                 )
 
         return RuleResult(passed=True, rule_name="path_boundary")
@@ -272,3 +276,94 @@ class SizeLimitRule(SecurityRule):
                 severity="error",
             )
         return RuleResult(passed=True, rule_name="size_limit")
+
+
+class ChangeSetRule(SecurityRule):
+    """Validate patch structure and reject sensitive target paths before execution."""
+
+    def applies_to(self, tool_name: str) -> bool:
+        return tool_name == "apply_patch_set"
+
+    def evaluate(self, tool_name: str, params: dict[str, Any], project_dir: str) -> RuleResult:
+        content = str(params.get("patch", ""))
+        if len(content.encode("utf-8")) > SizeLimitRule.MAX_WRITE_SIZE:
+            return RuleResult(False, "change_set", "Patch exceeds 1MB limit", "error")
+        try:
+            from miniclaude.execution.patches import PatchSet
+            patch = PatchSet.parse(content)
+        except ValueError as exc:
+            return RuleResult(False, "change_set", f"Invalid patch: {exc}", "error")
+        sensitive = SensitiveFileRule.SENSITIVE_PATTERNS
+        for path in patch.touched_paths:
+            if any(re.search(pattern, path, re.IGNORECASE) for pattern in sensitive):
+                return RuleResult(False, "change_set", f"Patch targets sensitive file: {path}", "error")
+        return RuleResult(True, "change_set")
+
+
+class TransactionalDeleteRule(SecurityRule):
+    """Validate exact transactional delete targets before backup work begins."""
+
+    def applies_to(self, tool_name: str) -> bool:
+        return tool_name == "delete_files_transactionally"
+
+    def evaluate(self, tool_name: str, params: dict[str, Any], project_dir: str) -> RuleResult:
+        paths = params.get("paths", [])
+        if not isinstance(paths, list) or not paths:
+            return RuleResult(False, "transactional_delete", "Delete paths are required", "error")
+        from pathlib import Path
+        project = Path(project_dir).resolve(strict=False)
+        for raw in paths:
+            value = str(raw)
+            if not value or "\\" in value:
+                return RuleResult(False, "transactional_delete", f"Invalid delete path: {value}", "error")
+            try:
+                project.joinpath(*value.split("/")).resolve(strict=False).relative_to(project)
+            except ValueError:
+                return RuleResult(False, "transactional_delete", f"Delete path escapes project: {value}", "error")
+            if any(re.search(pattern, value, re.IGNORECASE) for pattern in SensitiveFileRule.SENSITIVE_PATTERNS):
+                return RuleResult(False, "transactional_delete", f"Sensitive delete target blocked: {value}", "error")
+        return RuleResult(True, "transactional_delete")
+
+
+class CheckpointRewindRule(SecurityRule):
+    """Require explicit approval before a checkpoint changes workspace code."""
+
+    def applies_to(self, tool_name: str) -> bool:
+        return tool_name == "rewind_checkpoint"
+
+    def evaluate(self, tool_name: str, params: dict[str, Any], project_dir: str) -> RuleResult:
+        if str(params.get("mode", "both")) in {"code", "both"}:
+            return RuleResult(
+                False,
+                "checkpoint_rewind",
+                "Checkpoint rewind will restore workspace files",
+                "warning",
+            )
+        return RuleResult(True, "checkpoint_rewind")
+
+
+class TransactionRetentionRule(SecurityRule):
+    """Require confirmation before making rollback data less recoverable."""
+
+    def applies_to(self, tool_name: str) -> bool:
+        return tool_name in {
+            "finalize_change_transaction", "pin_change_transaction", "prune_change_transactions",
+            "purge_large_backup_cache", "abort_restore_transaction",
+        }
+
+    def evaluate(self, tool_name: str, params: dict[str, Any], project_dir: str) -> RuleResult:
+        destructive = (
+            tool_name == "finalize_change_transaction"
+            or (tool_name == "pin_change_transaction" and params.get("pinned") is False)
+            or (tool_name == "prune_change_transactions" and params.get("dry_run", True) is False)
+            or (tool_name == "purge_large_backup_cache" and params.get("dry_run", True) is False)
+            or tool_name == "abort_restore_transaction"
+        )
+        if destructive:
+            return RuleResult(
+                False,
+                "transaction_retention",
+                "Operation can reduce or remove rollback availability",
+                "warning",
+            )
+        return RuleResult(True, "transaction_retention")

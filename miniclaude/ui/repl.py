@@ -9,6 +9,8 @@ from typing import Any
 from miniclaude.core.context import ConversationContext
 from miniclaude.core.loop import QueryLoop
 from miniclaude.ui.renderer import Renderer
+from miniclaude.runtime.checkpoints import CheckpointManager, RewindMode
+from miniclaude.runtime.events import EventType
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +26,16 @@ class REPL:
         /quit    - Exit
     """
 
-    def __init__(self, query_loop: QueryLoop, context: ConversationContext) -> None:
+    def __init__(
+        self,
+        query_loop: QueryLoop,
+        context: ConversationContext,
+        checkpoint_manager: CheckpointManager | None = None,
+    ) -> None:
         self.query_loop = query_loop
         self.context = context
         self.renderer = Renderer()
+        self.checkpoint_manager = checkpoint_manager
         self._running = False
 
     async def run(self) -> None:
@@ -41,6 +49,10 @@ class REPL:
             on_tool_end=self.renderer.print_tool_end,
             on_thinking=self.renderer.print_thinking,
         )
+        if self.query_loop.tool_executor.permission_manager:
+            self.query_loop.tool_executor.permission_manager.set_confirm_callback(
+                self.renderer.confirm_tool
+            )
 
         self._running = True
 
@@ -84,6 +96,11 @@ class REPL:
 
         elif cmd in ("/clear", "/cls"):
             self.context.clear()
+            self.query_loop.event_store.append(
+                session_id=self.context.session_id,
+                event_type=EventType.SESSION_STARTED,
+                payload={"model": self.query_loop.config.model},
+            )
             self.renderer.print_info("Conversation cleared.")
 
         elif cmd in ("/stats", "/s"):
@@ -95,6 +112,25 @@ class REPL:
         elif cmd in ("/save",):
             path = self.context.save_session()
             self.renderer.print_info(f"Session saved to: {path}")
+
+        elif cmd in ("/checkpoints", "/cp"):
+            self._show_checkpoints()
+
+        elif cmd.startswith("/rewind "):
+            self._rewind(cmd)
+
+        elif cmd in ("/restores",):
+            self._show_restores()
+
+        elif cmd in ("/instructions",):
+            self.renderer.console.print_json(data=self.context.instruction_bundle.describe())
+
+        elif cmd in ("/hooks",):
+            hook_bus = self.query_loop.tool_executor.hook_bus
+            self.renderer.console.print_json(data=hook_bus.describe() if hook_bus else [])
+
+        elif cmd.startswith("/abort-restore "):
+            self._abort_restore(cmd.split(" ", 1)[1].strip())
 
         elif cmd in ("/quit", "/exit", "/q"):
             self._running = False
@@ -116,6 +152,12 @@ class REPL:
   [cyan]/clear[/cyan]    Clear conversation history
   [cyan]/stats[/cyan]    Show session statistics
   [cyan]/save[/cyan]     Save current session
+  [cyan]/checkpoints[/cyan] List prompt checkpoints and code health
+  [cyan]/rewind ID MODE[/cyan] Rewind mode: code, conversation, both, summary
+  [cyan]/restores[/cyan] Show compensating restore transactions
+  [cyan]/instructions[/cyan] Show loaded project instruction sources
+  [cyan]/hooks[/cyan] Show registered lifecycle hooks
+  [cyan]/abort-restore ID[/cyan] Release a conflicted restore lease
   [cyan]/quit[/cyan]     Exit MiniClaude
 
 [bold]Tips:[/bold]
@@ -125,6 +167,72 @@ class REPL:
   • I'll remember context throughout our conversation
 """
         self.renderer.console.print(help_text)
+
+    def _show_checkpoints(self) -> None:
+        if self.checkpoint_manager is None:
+            self.renderer.print_error("Checkpoint manager is unavailable")
+            return
+        checkpoints = self.checkpoint_manager.list_checkpoints()
+        if not checkpoints:
+            self.renderer.print_info("No prompt checkpoints yet.")
+            return
+        for index, item in enumerate(checkpoints, start=1):
+            prompt = item.prompt.replace("\n", " ")[:70]
+            self.renderer.console.print(
+                f"[cyan]{index:>2}[/cyan]  [bold]{item.code_health:<11}[/bold]  "
+                f"tx={len(item.transaction_ids):<2}  {prompt}"
+            )
+
+    def _rewind(self, command: str) -> None:
+        if self.checkpoint_manager is None:
+            self.renderer.print_error("Checkpoint manager is unavailable")
+            return
+        parts = command.split()
+        if len(parts) < 2:
+            self.renderer.print_error("Usage: /rewind <index|checkpoint-id|latest> [code|conversation|both|summary]")
+            return
+        checkpoint_id = parts[1]
+        try:
+            mode = RewindMode(parts[2] if len(parts) > 2 else "both")
+            if mode in {RewindMode.CODE, RewindMode.BOTH} and not self.renderer.confirm_tool(
+                "rewind_checkpoint", {"checkpoint_id": checkpoint_id, "mode": mode.value}
+            ):
+                self.renderer.print_info("Rewind cancelled.")
+                return
+            receipt = self.checkpoint_manager.rewind(checkpoint_id, mode)
+            self.renderer.print_info(
+                f"Rewind {receipt.mode.value} completed; active session={receipt.active_session_id}"
+                + (f", restore={receipt.restore_id}" if receipt.restore_id else "")
+            )
+        except (OSError, RuntimeError, ValueError) as exc:
+            self.renderer.print_error(f"Rewind failed: {exc}")
+
+    def _show_restores(self) -> None:
+        if self.checkpoint_manager is None:
+            self.renderer.print_error("Checkpoint manager is unavailable")
+            return
+        receipts = self.checkpoint_manager.change_engine.restore_coordinator.list_recent()
+        if not receipts:
+            self.renderer.print_info("No restore transactions yet.")
+            return
+        for item in receipts:
+            self.renderer.console.print(
+                f"[cyan]{item.restore_id[:8]}[/cyan]  {item.state.value:<12}  "
+                f"paths={len(item.touched_paths)}  sources={len(item.source_transaction_ids)}"
+            )
+
+    def _abort_restore(self, restore_id: str) -> None:
+        if self.checkpoint_manager is None:
+            self.renderer.print_error("Checkpoint manager is unavailable")
+            return
+        if not self.renderer.confirm_tool("abort_restore_transaction", {"restore_id": restore_id}):
+            self.renderer.print_info("Restore abort cancelled.")
+            return
+        try:
+            receipt = self.checkpoint_manager.change_engine.restore_coordinator.abort(restore_id)
+            self.renderer.print_info(f"Restore {receipt.restore_id} is now {receipt.state.value}.")
+        except (OSError, RuntimeError, ValueError) as exc:
+            self.renderer.print_error(f"Restore abort failed: {exc}")
 
     def _cleanup(self) -> None:
         """Clean up on exit."""

@@ -24,7 +24,7 @@ class RefactorSkill(BaseSkill):
                 "improve the structure of this file",
             ],
             applicable_when="User wants to improve code structure without changing behavior",
-            tools_used=["read_file", "write_file", "edit_file", "grep_search"],
+            tools_used=["read_file", "apply_patch_set", "grep_search"],
         )
 
     async def execute(self, context: SkillContext) -> SkillResult:
@@ -58,5 +58,5 @@ You are in refactoring mode. Follow this disciplined approach:
 ### 4. Output
 Explain what you're refactoring and why before each change.
 """,
-            suggested_tools=["read_file", "edit_file", "grep_search", "glob_files"],
+            suggested_tools=["read_file", "apply_patch_set", "grep_search", "glob_files"],
         )
