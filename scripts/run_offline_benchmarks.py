@@ -4,7 +4,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from miniclaude.evaluation.runner import BenchmarkRunner, BenchmarkTask
+from undomesh.evaluation.runner import BenchmarkRunner, BenchmarkTask
 
 
 def main() -> None:

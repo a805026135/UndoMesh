@@ -7,13 +7,13 @@ import sys
 
 import pytest
 
-from miniclaude.execution.patches import PatchSet
-from miniclaude.execution.transactions import (
+from undomesh.execution.patches import PatchSet
+from undomesh.execution.transactions import (
     DurableChangeEngine,
     TransactionConflictError,
     TransactionState,
 )
-from miniclaude.execution.recovery import RestoreState
+from undomesh.execution.recovery import RestoreState
 
 
 def _repo(path: Path) -> None:
@@ -161,11 +161,11 @@ def test_startup_recovery_preserves_unknown_newer_content(tmp_path: Path) -> Non
 def test_verifier_does_not_inherit_provider_credentials(tmp_path: Path, monkeypatch) -> None:
     _repo(tmp_path)
     monkeypatch.setenv("DASHSCOPE_API_KEY", "must-not-leak")
-    monkeypatch.setenv("MINICLAUDE_TRANSACTION_BACKUP_KEY", "also-must-not-leak")
+    monkeypatch.setenv("UNDOMESH_TRANSACTION_BACKUP_KEY", "also-must-not-leak")
     (tmp_path / "verify_env_test.py").write_text(
         "import os\ndef test_no_key():\n"
         "    assert 'DASHSCOPE_API_KEY' not in os.environ\n"
-        "    assert 'MINICLAUDE_TRANSACTION_BACKUP_KEY' not in os.environ\n",
+        "    assert 'UNDOMESH_TRANSACTION_BACKUP_KEY' not in os.environ\n",
         encoding="utf-8",
     )
     target = tmp_path / "safe.txt"

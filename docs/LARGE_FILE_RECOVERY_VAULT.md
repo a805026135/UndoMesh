@@ -48,15 +48,15 @@ Early cleanup is intentionally different from ordinary retention:
 4. The permission layer requires fresh human confirmation and never caches it.
 5. The engine recomputes the scope under the transaction lock; any mismatch rejects the purge.
 
-Purge cannot target an active or recovering transaction. Shared chunks remain while another live hot snapshot references them. “Permanent” means MiniClaude removes its recovery references and unlinks its local objects; it is not a forensic secure erase guarantee for SSD firmware, copy-on-write snapshots, cloud synchronization, Git objects or external backup software.
+Purge cannot target an active or recovering transaction. Shared chunks remain while another live hot snapshot references them. “Permanent” means UndoMesh removes its recovery references and unlinks its local objects; it is not a forensic secure erase guarantee for SSD firmware, copy-on-write snapshots, cloud synchronization, Git objects or external backup software.
 
 ## Configuration
 
 ```text
-MINICLAUDE_TRANSACTION_HOT_THRESHOLD_BYTES=268435456
-MINICLAUDE_TRANSACTION_HOT_TTL_HOURS=24
-MINICLAUDE_TRANSACTION_HOT_MAX_BACKUP_BYTES=53687091200
-MINICLAUDE_TRANSACTION_HOT_MINIMUM_FREE_BYTES=2147483648
+UNDOMESH_TRANSACTION_HOT_THRESHOLD_BYTES=268435456
+UNDOMESH_TRANSACTION_HOT_TTL_HOURS=24
+UNDOMESH_TRANSACTION_HOT_MAX_BACKUP_BYTES=53687091200
+UNDOMESH_TRANSACTION_HOT_MINIMUM_FREE_BYTES=2147483648
 ```
 
 The hot vault inherits the warm store's chunking and encryption settings but has separate manifests, chunks, keys and capacity metrics under `transactions/hot-vault/`. `transaction_storage_status` reports both tiers.

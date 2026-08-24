@@ -17,7 +17,7 @@ def main() -> None:
     parser.add_argument("artifact", type=Path)
     parser.add_argument("--version", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--key-env", default="MINICLAUDE_UPDATE_SIGNING_KEY")
+    parser.add_argument("--key-env", default="UNDOMESH_UPDATE_SIGNING_KEY")
     args = parser.parse_args()
     encoded = os.getenv(args.key_env, "")
     if not encoded:

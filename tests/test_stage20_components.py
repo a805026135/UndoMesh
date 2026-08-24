@@ -1,10 +1,10 @@
 import subprocess
 import pytest
 
-from miniclaude.execution.compression import CompressionBackend
-from miniclaude.execution.worktrees import GitWorktreeManager, WorktreeReviewWorkflow
-from miniclaude.observability.telemetry import Telemetry, TelemetryConfig
-from miniclaude.ui.review import build_review
+from undomesh.execution.compression import CompressionBackend
+from undomesh.execution.worktrees import GitWorktreeManager, WorktreeReviewWorkflow
+from undomesh.observability.telemetry import Telemetry, TelemetryConfig
+from undomesh.ui.review import build_review
 
 
 def test_telemetry_is_opt_in_and_redacts_sensitive_attributes():

@@ -8,7 +8,7 @@ Only provider, model and Base URL are saved to `data/config/provider.json`. The 
 
 ```powershell
 $env:DEEPSEEK_API_KEY="..."
-python -m miniclaude --provider deepseek --model deepseek-v4-flash --test-connection
+python -m undomesh --provider deepseek --model deepseek-v4-flash --test-connection
 ```
 
 Custom endpoints must use HTTPS; HTTP is accepted only for localhost. They must implement OpenAI-compatible chat completions and function tool calls. Anthropic and Gemini use their official compatibility layers, so native-only features are unavailable.

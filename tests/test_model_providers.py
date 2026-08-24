@@ -6,11 +6,11 @@ import json
 
 import pytest
 
-from miniclaude.core.config import MiniClaudeConfig
-from miniclaude.llm.client import ClaudeClient
-from miniclaude.llm.diagnostics import ConnectionStatus, classify_connection_error
-from miniclaude.llm.provider_settings import ProviderSettingsStore
-from miniclaude.llm.providers import PROVIDERS, resolve_base_url
+from undomesh.core.config import UndoMeshConfig
+from undomesh.llm.client import ModelClient
+from undomesh.llm.diagnostics import ConnectionStatus, classify_connection_error
+from undomesh.llm.provider_settings import ProviderSettingsStore
+from undomesh.llm.providers import PROVIDERS, resolve_base_url
 
 
 def test_mainstream_provider_presets_have_secure_urls() -> None:
@@ -39,9 +39,9 @@ def test_provider_settings_never_persist_api_key(tmp_path) -> None:
 
 
 def test_provider_specific_environment_key(monkeypatch) -> None:
-    monkeypatch.delenv("MINICLAUDE_API_KEY", raising=False)
+    monkeypatch.delenv("UNDOMESH_API_KEY", raising=False)
     monkeypatch.setenv("DEEPSEEK_API_KEY", "secret")
-    config = MiniClaudeConfig(provider="deepseek", api_base_url="")
+    config = UndoMeshConfig(provider="deepseek", api_base_url="")
     assert config.api_key == "secret"
     assert config.effective_api_base_url == "https://api.deepseek.com"
 
@@ -57,7 +57,7 @@ async def test_connection_uses_minimal_chat_request(config, monkeypatch) -> None
             choice = type("Choice", (), {"message": message, "finish_reason": "stop"})()
             return type("Response", (), {"choices": [choice], "usage": None})()
 
-    client = ClaudeClient(config)
+    client = ModelClient(config)
     client._client.chat.completions = FakeCompletions()
     response = await client.test_connection()
 
@@ -81,7 +81,7 @@ def test_connection_errors_are_classified_without_raw_provider_details() -> None
 
 @pytest.mark.asyncio
 async def test_diagnostic_report_is_structured(config) -> None:
-    client = ClaudeClient(config)
+    client = ModelClient(config)
 
     async def failed():
         raise Exception("model_not_found and internal account id")

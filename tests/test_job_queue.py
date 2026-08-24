@@ -3,9 +3,9 @@ import asyncio
 import pytest
 from dataclasses import dataclass
 
-from miniclaude.runtime.jobs import JobState, JobStore, SingleWriterCommandQueue
-from miniclaude.server.service import AppService
-from miniclaude.observability.telemetry import Telemetry, TelemetryConfig
+from undomesh.runtime.jobs import JobState, JobStore, SingleWriterCommandQueue
+from undomesh.server.service import AppService
+from undomesh.observability.telemetry import Telemetry, TelemetryConfig
 
 
 def test_job_store_restart_and_explicit_resume(tmp_path):

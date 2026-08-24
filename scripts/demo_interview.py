@@ -13,12 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from miniclaude.execution.patches import PatchSet
-from miniclaude.execution.transactions import DurableChangeEngine
-from miniclaude.execution.worktrees import GitWorktreeManager, WorktreeReviewWorkflow
-from miniclaude.observability.telemetry import Telemetry, TelemetryConfig
-from miniclaude.runtime.jobs import JobState
-from miniclaude.server.service import AppService
+from undomesh.execution.patches import PatchSet
+from undomesh.execution.transactions import DurableChangeEngine
+from undomesh.execution.worktrees import GitWorktreeManager, WorktreeReviewWorkflow
+from undomesh.observability.telemetry import Telemetry, TelemetryConfig
+from undomesh.runtime.jobs import JobState
+from undomesh.server.service import AppService
 
 
 def git(path: Path, *args: str) -> None:
@@ -51,7 +51,7 @@ async def wait_job(service: AppService, job_id: str):
 
 
 async def main_async() -> dict[str, object]:
-    with TemporaryDirectory(prefix="miniclaude-interview-") as temporary:
+    with TemporaryDirectory(prefix="undomesh-interview-") as temporary:
         base = Path(temporary)
         repo = base / "recovery"
         init_repo(repo)

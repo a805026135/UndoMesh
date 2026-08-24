@@ -1,4 +1,4 @@
-"""MiniClaude Launcher (debug version - shows console output)."""
+"""UndoMesh Launcher (debug version - shows console output)."""
 
 import os
 import sys
@@ -21,19 +21,19 @@ try:
 except ImportError:
     pass
 
-os.environ["MINICLAUDE_PROJECT_DIR"] = str(project_dir)
+os.environ["UNDOMESH_PROJECT_DIR"] = str(project_dir)
 
 
 def main():
     print("=" * 50)
-    print("MiniClaude Launcher (Debug)")
+    print("UndoMesh Launcher (Debug)")
     print("=" * 50)
     print(f"Python: {sys.executable}")
     print(f"Project: {project_dir}")
     print()
 
     try:
-        from miniclaude.ui.launcher import show_launcher, launch_cli
+        from undomesh.ui.launcher import show_launcher, launch_cli
         print("[OK] launcher imported")
     except Exception as e:
         print(f"[FAIL] import launcher: {e}")
@@ -63,7 +63,7 @@ def main():
     elif choice == "gui":
         print("Launching Desktop GUI...")
         try:
-            from miniclaude.ui.desktop import DesktopApp
+            from undomesh.ui.desktop import DesktopApp
             print("[OK] desktop imported")
             app = DesktopApp()
             print("[OK] DesktopApp created, running...")

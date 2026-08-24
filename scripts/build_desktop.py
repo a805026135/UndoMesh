@@ -12,7 +12,7 @@ def main() -> None:
     if not executable:
         raise SystemExit("PyInstaller is not installed; install the 'desktop' extra first")
     result = subprocess.run([
-        executable, "--noconfirm", "--clean", "--windowed", "--name", "MiniClaude", "run.pyw"
+        executable, "--noconfirm", "--clean", "--windowed", "--name", "UndoMesh", "run.pyw"
     ], check=False)
     raise SystemExit(result.returncode)
 

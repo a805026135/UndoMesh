@@ -1,7 +1,7 @@
-# MiniClaude 改进规划与执行基线
+# UndoMesh 改进规划与执行基线
 
 > 文档状态：执行基线（Baseline）  
-> 适用范围：MiniClaude v0.2–v0.5  
+> 适用范围：UndoMesh v0.2–v0.5
 > 创建日期：2026-08-22  
 > 最后更新：2026-08-22  
 > 维护规则：任何影响核心目标、事件模型、安全边界、阶段顺序或验收标准的修改，必须先更新本文档或新增 ADR。
@@ -10,7 +10,7 @@
 
 ## 1. 文档目的
 
-本文档用于约束 MiniClaude 后续改进，避免开发过程中出现以下问题：
+本文档用于约束 UndoMesh 后续改进，避免开发过程中出现以下问题：
 
 - 为追求功能数量而偏离核心研究问题；
 - 重复实现 Codex、Claude Code 或 DeepSeek Harness 已成熟解决的基础能力；
@@ -28,7 +28,7 @@
 
 ### 2.1 定位声明
 
-MiniClaude 是一个面向 Coding Agent Harness 研究的轻量 Python Runtime。它不以复刻完整 Claude Code、Codex 或 DeepSeek Harness 为目标，而是集中解决以下四类问题：
+UndoMesh 是一个面向 Coding Agent Harness 研究的轻量 Python Runtime。它不以复刻完整 Claude Code、Codex 或 DeepSeek Harness 为目标，而是集中解决以下四类问题：
 
 1. **可回放执行**：以 Turn–Step–Event 模型记录 Agent 的模型请求、工具调用、权限决策和上下文变化，支持恢复、分叉和策略对照回放。
 2. **来源感知安全**：跟踪用户输入、仓库文件、网页、工具结果、记忆和子 Agent 输出的来源与信任等级，在敏感工具执行前进行 source-to-sink 风险判断。
@@ -37,7 +37,7 @@ MiniClaude 是一个面向 Coding Agent Harness 研究的轻量 Python Runtime�
 
 ### 2.2 一句话介绍
 
-> MiniClaude 是一个可回放、来源感知、可评测的轻量 Coding Agent Runtime，用于量化不同 Harness 策略对任务成功率、安全性和执行成本的影响。
+> UndoMesh 是一个可回放、来源感知、可评测的轻量 Coding Agent Runtime，用于量化不同 Harness 策略对任务成功率、安全性和执行成本的影响。
 
 ### 2.3 项目成功标准
 
@@ -122,7 +122,7 @@ Agent 和子 Agent 只获得完成当前任务所需的最小工具、路径、�
 - 遥测：OpenTelemetry；
 - Token：供应商 usage 与成熟 tokenizer。
 
-MiniClaude 自身重点负责生命周期、策略、provenance、调度、事件投影、回放与评测。
+UndoMesh 自身重点负责生命周期、策略、provenance、调度、事件投影、回放与评测。
 
 ---
 
@@ -170,7 +170,7 @@ User Message
 - 原有测试总数：42；
 - 在当前仓库强制导入后：41 通过，1 失败；
 - 失败原因：`tiktoken` 首次加载 fallback encoding 时尝试联网下载；
-- 环境中存在另一个 editable-install 的 MiniClaude，需要防止测试误导入其他目录。
+- 环境中存在另一个 editable-install 的 UndoMesh，需要防止测试误导入其他目录。
 
 2026-08-22 第一开发迭代重新确认后的基线：
 
@@ -266,7 +266,7 @@ UI / API
 ### 6.3 建议目录
 
 ```text
-miniclaude/
+undomesh/
 ├── runtime/
 │   ├── models.py
 │   ├── events.py
@@ -443,7 +443,7 @@ Capability 由父级授予。子 Agent 只能获得父级能力的子集。
 
 - 所有测试无需真实 API key；
 - 所有测试无需公网；
-- `miniclaude.__file__` 指向当前仓库；
+- `undomesh.__file__` 指向当前仓库；
 - 原有测试全部通过；
 - 新增 Query Loop 集成测试稳定通过；
 - 测试结果和基线写入文档。
@@ -982,7 +982,7 @@ Patch 应用前保存触及文件快照。任一验证失败时恢复旧文件�
 
 **状态：已完成（2026-08-22，122 passed、1 skipped；8/8 离线 Benchmark）**
 
-目标是把回退从 Patch 失败处理提升为 MiniClaude 默认代码修改协议。每个变更在隔离工作区应用和验证；旧/新路径以 SHA-256 pre/postimage 持久化，原子 Journal 记录 `proposed → prepared → staged → verified → committing → committed` 全部状态。跨进程提交锁把目标复检和写入放在同一临界区，乐观冲突检测优先保留用户的新修改。
+目标是把回退从 Patch 失败处理提升为 UndoMesh 默认代码修改协议。每个变更在隔离工作区应用和验证；旧/新路径以 SHA-256 pre/postimage 持久化，原子 Journal 记录 `proposed → prepared → staged → verified → committing → committed` 全部状态。跨进程提交锁把目标复检和写入放在同一临界区，乐观冲突检测优先保留用户的新修改。
 
 进入 `committing` 后发生中断时，应用启动恢复全部 preimage；提交后可通过事务 ID 显式回退，但 postimage 不匹配时拒绝覆盖新工作。创建、删除、重命名、文件模式和主机允许的符号链接进入同一协议。默认 Registry 关闭直接 write/edit/shell 旁路，并提供 `apply_patch_set`、`rollback_change_set`、`change_transaction_status` 三个用户可见接口。
 
@@ -1020,7 +1020,7 @@ Patch 应用前保存触及文件快照。任一验证失败时恢复旧文件�
 
 新增 `delete_files_transactionally` 作为无法用 unified diff 表达的大型二进制删除入口。源文件直接流式经过内容定义分块、条件压缩和 AES-GCM，内存上限不随文件大小增长；恢复同样逐块写入 sibling temp，fsync、原子替换后重新读取完整目标并验证 SHA-256。`audit_transaction_recovery` 在无写入条件下验证所有 preimage 并区分 `available`、`conflicted`、`expired`、`corrupt`。
 
-热备到期由启动/周期保留任务清除，活跃、恢复中和显式固定事务受保护。提前执行永久清理必须先 dry-run，预览把精确 transaction IDs、content digests 和 logical bytes 绑定为 `purge_token`；真实执行重新计算范围并通过不可缓存的一次性人工审批。共享块仍按引用保留。“永久”仅代表 MiniClaude 解除引用并 unlink 本地对象，不承诺 SSD、快照、云同步或 Git 中的取证级擦除。
+热备到期由启动/周期保留任务清除，活跃、恢复中和显式固定事务受保护。提前执行永久清理必须先 dry-run，预览把精确 transaction IDs、content digests 和 logical bytes 绑定为 `purge_token`；真实执行重新计算范围并通过不可缓存的一次性人工审批。共享块仍按引用保留。“永久”仅代表 UndoMesh 解除引用并 unlink 本地对象，不承诺 SSD、快照、云同步或 Git 中的取证级擦除。
 
 完成证据：覆盖不依赖源文件 `read_bytes()` 的流式路径、超大文件删除与字节级一致恢复、容量 fail-closed、24 小时到期、Pin 延期、可用/冲突/损坏健康审计、错误清理 token、无审批拒绝和永久清理。当前 Python Gear 循环尚未针对 10 GiB 吞吐优化；Patch staging 仍会复制工作区，超大二进制删除应使用专用事务工具；恢复租约、独立补偿事务和多事务统一预检留到 17B。
 
@@ -1606,7 +1606,7 @@ Backlog 项只有在核心阶段完成或成为其必要依赖后才进入实施
 
 限制：Claude Code 核心执行引擎未完整开源，只依据官方文档和公开插件行为，不宣称源码级复刻。
 
-### MiniClaude 的差异化
+### UndoMesh 的差异化
 
 - 轻量 Python 实现，适合教学、实验和策略消融；
 -把可回放与 Harness 对照实验作为一等能力；

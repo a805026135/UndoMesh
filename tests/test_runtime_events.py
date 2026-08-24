@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from miniclaude.runtime.dispatcher import LifecycleDispatcher, ListenerFailurePolicy
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.invariants import LifecycleInvariantError, validate_lifecycle
-from miniclaude.runtime.store import InMemoryEventStore
+from undomesh.runtime.dispatcher import LifecycleDispatcher, ListenerFailurePolicy
+from undomesh.runtime.events import EventType
+from undomesh.runtime.invariants import LifecycleInvariantError, validate_lifecycle
+from undomesh.runtime.store import InMemoryEventStore
 
 
 def test_sequences_are_monotonic_per_session():

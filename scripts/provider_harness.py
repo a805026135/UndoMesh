@@ -13,9 +13,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from miniclaude.app import MiniClaudeApp
-from miniclaude.core.config import MiniClaudeConfig
-from miniclaude.runtime.events import EventType
+from undomesh.app import UndoMeshApp
+from undomesh.core.config import UndoMeshConfig
+from undomesh.runtime.events import EventType
 
 
 async def run(args: argparse.Namespace) -> dict:
@@ -23,7 +23,7 @@ async def run(args: argparse.Namespace) -> dict:
     marker = fixture.read_text(encoding="utf-8").strip()
     with TemporaryDirectory() as directory:
         temporary = Path(directory)
-        config = MiniClaudeConfig(
+        config = UndoMeshConfig(
             provider=args.provider,
             model=args.model,
             api_base_url=args.base_url,
@@ -32,7 +32,7 @@ async def run(args: argparse.Namespace) -> dict:
             event_db=str(temporary / "events.db"),
             skill_eval_db=str(temporary / "skills.db"),
         )
-        app = MiniClaudeApp(config)
+        app = UndoMeshApp(config)
         try:
             response = await app.run_query(
                 "Use read_file on benchmarks/fixtures/provider_smoke.txt and return only its content."

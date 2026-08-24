@@ -13,8 +13,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from miniclaude.agents.causal import CausalTaskLedger, CausalWorktreeCoordinator
-from miniclaude.agents.contracts import TaskContract
+from undomesh.agents.causal import CausalTaskLedger, CausalWorktreeCoordinator
+from undomesh.agents.contracts import TaskContract
 
 
 def git(repo: Path, *args: str) -> None:
@@ -26,7 +26,7 @@ def build_demo(base: Path) -> dict[str, object]:
     repo.mkdir(parents=True)
     git(repo, "init", "-q")
     git(repo, "config", "user.email", "demo@example.invalid")
-    git(repo, "config", "user.name", "MiniClaude Demo")
+    git(repo, "config", "user.name", "UndoMesh Demo")
     (repo / "schema.txt").write_text("schema-v1\n", encoding="utf-8")
     git(repo, "add", ".")
     git(repo, "commit", "-qm", "base")
@@ -103,7 +103,7 @@ def show_ui(report: dict[str, object], *, screenshot: Path | None = None) -> Non
     from tkinter import ttk
 
     root = tk.Tk()
-    root.title("MiniClaude · Causal Rollback Review")
+    root.title("UndoMesh · Causal Rollback Review")
     root.geometry("1120x700")
     root.configure(bg="#0d1117")
     root.minsize(900, 600)
@@ -184,7 +184,7 @@ def main() -> None:
     parser.add_argument("--ui", action="store_true", help="show the desktop review panel")
     parser.add_argument("--screenshot", type=Path, help="capture the populated review panel and exit")
     args = parser.parse_args()
-    with TemporaryDirectory(prefix="miniclaude-causal-demo-") as temporary:
+    with TemporaryDirectory(prefix="undomesh-causal-demo-") as temporary:
         report = build_demo(Path(temporary))
         if args.ui or args.screenshot:
             show_ui(report, screenshot=args.screenshot)

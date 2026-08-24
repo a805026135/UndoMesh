@@ -1,4 +1,4 @@
-# MiniClaude
+# UndoMesh
 
 > 面向可审计长任务的轻量 AI Coding Agent，以 **Query Loop + Tool Use** 构建执行闭环，以分层恢复事务与安全 Rewind 形成自己的核心差异。
 
@@ -88,7 +88,7 @@
 
 ### 核心亮点：可恢复的代码变更事务
 
-MiniClaude 默认不把模型修改直接写入工作区。`apply_patch_set` 先为所有旧/新路径建立 SHA-256 内容寻址备份和持久化 Journal，再把补丁放入隔离副本验证；只有目标文件仍与准备时一致才会进入提交。创建、修改、删除和重命名都产生带完整状态历史的事务收据。
+UndoMesh 默认不把模型修改直接写入工作区。`apply_patch_set` 先为所有旧/新路径建立 SHA-256 内容寻址备份和持久化 Journal，再把补丁放入隔离副本验证；只有目标文件仍与准备时一致才会进入提交。创建、修改、删除和重命名都产生带完整状态历史的事务收据。
 
 提交前的冲突检测与写入由跨进程锁串行化；进程若在多文件提交中途退出，下次启动会根据 `committing` Journal 恢复全部 preimage。若现场内容既不是 preimage 也不是 postimage，则进入 `recovery_conflicted` 并保留用户内容，不盲目覆盖。`rollback_change_set` 仅在不会覆盖用户后续修改时回退，`change_transaction_status` 可查询验证证据、冲突和恢复记录。默认 Registry 不注册直接 `write_file`、`edit_file` 和 Shell 写入旁路；需要兼容旧行为时才显式关闭事务模式。详细协议与边界见 `docs/DURABLE_CHANGE_TRANSACTIONS.md`。
 
@@ -262,7 +262,7 @@ len(content) > 2000 ?
 
 #### 因果回退：撤销错误，也撤销它造成的影响
 
-只回退一个 Agent 的文件可能留下依赖其输出的后代任务。MiniClaude 将显式依赖与读写集重叠写入 SQLite 因果账本，并把 Task/Agent/Worktree 身份传播到 Change Journal。指定任务回退时先计算传递影响闭包，再在独立 Git Worktree 中逆拓扑撤销；也可选择撤销根任务后重放仍能应用的后代，任何冲突都在主工作区写入前终止。
+只回退一个 Agent 的文件可能留下依赖其输出的后代任务。UndoMesh 将显式依赖与读写集重叠写入 SQLite 因果账本，并把 Task/Agent/Worktree 身份传播到 Change Journal。指定任务回退时先计算传递影响闭包，再在独立 Git Worktree 中逆拓扑撤销；也可选择撤销根任务后重放仍能应用的后代，任何冲突都在主工作区写入前终止。
 
 人工审批同时绑定 `plan_sha256` 与 `review_sha256`。后者覆盖父 HEAD、候选 Commit、完整 Tree Hash、Binary Diff 和验证结果；审批后只要仓库或候选发生漂移，就拒绝合并。这把“多 Agent 调度 → 变更归因 → 影响分析 → 隔离补偿/重放 → 验证 → 审批 → 确定性合并”连成一个可审计闭环。
 
@@ -320,14 +320,14 @@ python scripts/demo_causal_rollback.py --ui
 ## 三、项目结构
 
 ```
-MiniClaudecode/
+UndoMeshcode/
 ├── run.pyw                 # 双击启动器（Windows 无控制台）
 ├── run_debug.py            # 调试启动器（带控制台输出）
 ├── pyproject.toml          # 项目配置与依赖
 ├── .env.example            # 环境变量模板
 │
-├── miniclaude/
-│   ├── __main__.py         # CLI 入口 (python -m miniclaude)
+├── undomesh/
+│   ├── __main__.py         # CLI 入口 (python -m undomesh)
 │   ├── app.py              # 应用主类，连接所有子系统
 │   │
 │   ├── core/               # 核心引擎
@@ -409,8 +409,8 @@ MiniClaudecode/
 
 ```bash
 # 1. 克隆
-git clone https://github.com/a805026135/MiniClaude.git
-cd MiniClaude
+git clone https://github.com/a805026135/UndoMesh.git
+cd UndoMesh
 
 # 2. 安装
 pip install -e .
@@ -421,8 +421,8 @@ cp .env.example .env
 
 # 4. 启动
 python run.pyw              # 启动器（选择 CLI 或 Desktop）
-python -m miniclaude        # 直接进入终端 REPL
-python -m miniclaude --gui  # 直接进入桌面 GUI
+python -m undomesh        # 直接进入终端 REPL
+python -m undomesh --gui  # 直接进入桌面 GUI
 ```
 
 ---
@@ -484,35 +484,35 @@ python -m miniclaude --gui  # 直接进入桌面 GUI
 
 | 环境变量 | 默认值 | 说明 |
 |----------|--------|------|
-| `MINICLAUDE_API_KEY` | (必填) | API 密钥 |
-| `MINICLAUDE_API_BASE_URL` | `https://token-plan-cn.xiaomimimo.com/v1` | API 端点 |
-| `MINICLAUDE_MODEL` | `mimo-v2.5-pro` | 模型标识 |
-| `MINICLAUDE_MAX_TOKENS` | `8192` | 单次最大输出 Token |
-| `MINICLAUDE_TEMPERATURE` | `0.6` | 采样温度 |
-| `MINICLAUDE_CONTEXT_LIMIT` | `131072` | 上下文窗口大小 |
-| `MINICLAUDE_EXTERNALIZE_THRESHOLD` | `2000` | 大结果外置化阈值（字符数） |
-| `MINICLAUDE_MEMORY_ENABLED` | `true` | 是否启用记忆系统 |
-| `MINICLAUDE_ALLOW_SHELL` | `true` | 是否允许 Shell 命令 |
-| `MINICLAUDE_CONFIRM_DANGEROUS` | `true` | 危险操作是否需要确认 |
-| `MINICLAUDE_SANDBOX_BACKEND` | `process` | Shell 隔离后端：`process`、`auto` 或 Linux `bubblewrap` |
-| `MINICLAUDE_SANDBOX_NETWORK_ENABLED` | `false` | OS 沙箱内是否开放网络；默认断网 |
-| `MINICLAUDE_TRANSACTIONAL_CHANGES_ONLY` | `true` | 禁止直接写/编辑/Shell 旁路，修改必须走事务 |
-| `MINICLAUDE_TRANSACTION_COMMITTED_RETENTION_DAYS` | `30` | 已提交事务回退窗口 |
-| `MINICLAUDE_TRANSACTION_TERMINAL_RETENTION_DAYS` | `7` | 拒绝/冲突/已回退事务备份窗口 |
-| `MINICLAUDE_TRANSACTION_TRASH_GRACE_DAYS` | `1` | 进入 trash 后的删除宽限期 |
-| `MINICLAUDE_TRANSACTION_MAX_BACKUP_BYTES` | `2147483648` | blob 与 trash 总容量硬上限 |
-| `MINICLAUDE_TRANSACTION_PRUNE_INTERVAL_HOURS` | `6` | 长时间运行时的定期清理间隔 |
-| `MINICLAUDE_TRANSACTION_BACKUP_ENCRYPTION` | `true` | 使用 AES-256-GCM 加密备份块 |
-| `MINICLAUDE_TRANSACTION_BACKUP_KEY` | 空 | 可选外部 32 字节 hex/base64 密钥；空则生成本地密钥 |
-| `MINICLAUDE_TRANSACTION_HOT_THRESHOLD_BYTES` | `268435456` | 进入独立超大文件热备区的阈值 |
-| `MINICLAUDE_TRANSACTION_HOT_TTL_HOURS` | `24` | 超大文件默认恢复窗口 |
-| `MINICLAUDE_TRANSACTION_HOT_MAX_BACKUP_BYTES` | `53687091200` | 热备区物理容量上限 |
-| `MINICLAUDE_TRANSACTION_HOT_MINIMUM_FREE_BYTES` | `2147483648` | 备份完成后必须保留的磁盘余量 |
-| `MINICLAUDE_EVENT_DB` | `data/runtime/events.db` | append-only 运行时事件库 |
-| `MINICLAUDE_SKILL_EVAL_DB` | `data/skills/evaluations.db` | Skill 版本与评测证据库 |
-| `MINICLAUDE_INSTRUCTION_MAX_BYTES` | `32768` | 分层项目指令总字节预算 |
-| `MINICLAUDE_INSTRUCTION_FALLBACK_NAMES` | 空 | 额外项目指令文件名，逗号分隔 |
-| `MINICLAUDE_INSTRUCTION_USER_DIR` | `~/.miniclaude` | 用户级指令目录 |
+| `UNDOMESH_API_KEY` | (必填) | API 密钥 |
+| `UNDOMESH_API_BASE_URL` | `https://token-plan-cn.xiaomimimo.com/v1` | API 端点 |
+| `UNDOMESH_MODEL` | `mimo-v2.5-pro` | 模型标识 |
+| `UNDOMESH_MAX_TOKENS` | `8192` | 单次最大输出 Token |
+| `UNDOMESH_TEMPERATURE` | `0.6` | 采样温度 |
+| `UNDOMESH_CONTEXT_LIMIT` | `131072` | 上下文窗口大小 |
+| `UNDOMESH_EXTERNALIZE_THRESHOLD` | `2000` | 大结果外置化阈值（字符数） |
+| `UNDOMESH_MEMORY_ENABLED` | `true` | 是否启用记忆系统 |
+| `UNDOMESH_ALLOW_SHELL` | `true` | 是否允许 Shell 命令 |
+| `UNDOMESH_CONFIRM_DANGEROUS` | `true` | 危险操作是否需要确认 |
+| `UNDOMESH_SANDBOX_BACKEND` | `process` | Shell 隔离后端：`process`、`auto` 或 Linux `bubblewrap` |
+| `UNDOMESH_SANDBOX_NETWORK_ENABLED` | `false` | OS 沙箱内是否开放网络；默认断网 |
+| `UNDOMESH_TRANSACTIONAL_CHANGES_ONLY` | `true` | 禁止直接写/编辑/Shell 旁路，修改必须走事务 |
+| `UNDOMESH_TRANSACTION_COMMITTED_RETENTION_DAYS` | `30` | 已提交事务回退窗口 |
+| `UNDOMESH_TRANSACTION_TERMINAL_RETENTION_DAYS` | `7` | 拒绝/冲突/已回退事务备份窗口 |
+| `UNDOMESH_TRANSACTION_TRASH_GRACE_DAYS` | `1` | 进入 trash 后的删除宽限期 |
+| `UNDOMESH_TRANSACTION_MAX_BACKUP_BYTES` | `2147483648` | blob 与 trash 总容量硬上限 |
+| `UNDOMESH_TRANSACTION_PRUNE_INTERVAL_HOURS` | `6` | 长时间运行时的定期清理间隔 |
+| `UNDOMESH_TRANSACTION_BACKUP_ENCRYPTION` | `true` | 使用 AES-256-GCM 加密备份块 |
+| `UNDOMESH_TRANSACTION_BACKUP_KEY` | 空 | 可选外部 32 字节 hex/base64 密钥；空则生成本地密钥 |
+| `UNDOMESH_TRANSACTION_HOT_THRESHOLD_BYTES` | `268435456` | 进入独立超大文件热备区的阈值 |
+| `UNDOMESH_TRANSACTION_HOT_TTL_HOURS` | `24` | 超大文件默认恢复窗口 |
+| `UNDOMESH_TRANSACTION_HOT_MAX_BACKUP_BYTES` | `53687091200` | 热备区物理容量上限 |
+| `UNDOMESH_TRANSACTION_HOT_MINIMUM_FREE_BYTES` | `2147483648` | 备份完成后必须保留的磁盘余量 |
+| `UNDOMESH_EVENT_DB` | `data/runtime/events.db` | append-only 运行时事件库 |
+| `UNDOMESH_SKILL_EVAL_DB` | `data/skills/evaluations.db` | Skill 版本与评测证据库 |
+| `UNDOMESH_INSTRUCTION_MAX_BYTES` | `32768` | 分层项目指令总字节预算 |
+| `UNDOMESH_INSTRUCTION_FALLBACK_NAMES` | 空 | 额外项目指令文件名，逗号分隔 |
+| `UNDOMESH_INSTRUCTION_USER_DIR` | `~/.undomesh` | 用户级指令目录 |
 
 ---
 
@@ -543,7 +543,7 @@ python -m pytest tests/ -v
 
 阶段 15 增加回退数据生命周期：显式验收与固定、状态保护、共享 blob 可达性回收、dry-run、两阶段 trash、孤儿宽限、2 GiB 预算及人工确认。Journal 在 blob 过期后仍保留审计哈希并明确标记 `rollback_available=false`；物理 unlink 不宣称 SSD、快照或云同步环境下的取证级安全擦除。固定离线 Benchmark 为 9/9 套件通过。
 
-阶段 16 将 2 GiB 回退区升级为压缩、分块去重和认证加密的内容仓库，并加入六小时定时清理和重要度/日期排序。固定离线 Benchmark 为 10/10。Claude Code `/rewind` 的公开 checkpoint 语义及 MiniClaude 的下一步映射见 `docs/CLAUDE_REWIND_COMPARISON.md`；不宣称掌握 Claude Code 私有实现源码。
+阶段 16 将 2 GiB 回退区升级为压缩、分块去重和认证加密的内容仓库，并加入六小时定时清理和重要度/日期排序。固定离线 Benchmark 为 10/10。Claude Code `/rewind` 的公开 checkpoint 语义及 UndoMesh 的下一步映射见 `docs/CLAUDE_REWIND_COMPARISON.md`；不宣称掌握 Claude Code 私有实现源码。
 
 阶段 17A 增加流式备份/恢复、独立 24 小时超大文件热备区、事务化二进制删除、恢复后完整哈希复核、只读恢复健康审计，以及绑定精确范围且每次都需人工审批的永久热备清理。固定离线 Benchmark 为 11/11。热备 unlink 不宣称取证级安全擦除，Python 内容定义分块的多 GB 吞吐仍有优化空间；恢复租约和独立补偿事务已在后续阶段完成。
 

@@ -1,4 +1,4 @@
-# MiniClaude 技术文档
+# UndoMesh 技术文档
 
 > 详细说明项目工作流程与五大关键技术的实现原理。
 
@@ -45,7 +45,7 @@
 
 ### 1.2 单次查询执行流程（Query Loop）
 
-这是 MiniClaude 的核心工作循环，实现了 **User → LLM → Tool Call → Result → Loop** 的任务执行闭环。
+这是 UndoMesh 的核心工作循环，实现了 **User → LLM → Tool Call → Result → Loop** 的任务执行闭环。
 
 ```
 用户输入: "读取 hello.py 并解释"
@@ -83,13 +83,13 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**核心代码路径**：`app.py` → `core/loop.py::QueryLoop.run()` → `llm/client.py::ClaudeClient.chat()` → `core/tool_executor.py::ToolExecutor.execute_all()`
+**核心代码路径**：`app.py` → `core/loop.py::QueryLoop.run()` → `llm/client.py::ModelClient.chat()` → `core/tool_executor.py::ToolExecutor.execute_all()`
 
 ### 1.3 消息格式（OpenAI 兼容）
 
 ```python
 # 系统消息（带 cache_control 标记）
-{"role": "system", "content": "你是 MiniClaude..."}
+{"role": "system", "content": "你是 UndoMesh..."}
 
 # 用户消息
 {"role": "user", "content": "读取 hello.py 并解释"}
@@ -140,7 +140,7 @@
 
 ### 2.3 二阶段路由实现
 
-**实现文件**：`miniclaude/skills/router.py` — `SkillRouter` 类
+**实现文件**：`undomesh/skills/router.py` — `SkillRouter` 类
 
 #### Stage 1：粗召回 (Coarse Recall)
 
@@ -243,7 +243,7 @@ def _rank(self, user_input: str, candidates: list[BaseSkill]) -> list[BaseSkill]
 
 ### 3.3 各步骤实现细节
 
-**实现文件**：`miniclaude/memory/extractor.py` — `MemoryExtractor` 类
+**实现文件**：`undomesh/memory/extractor.py` — `MemoryExtractor` 类
 
 #### Step 1：反思 (Reflect)
 
@@ -563,7 +563,7 @@ kwargs["system"] = [{
 
 ### 5.3 实现细节
 
-**实现文件**：`miniclaude/agents/orchestrator.py` + `miniclaude/agents/sub_agent.py`
+**实现文件**：`undomesh/agents/orchestrator.py` + `undomesh/agents/sub_agent.py`
 
 #### Agent Tool — 将子 Agent 暴露为工具
 

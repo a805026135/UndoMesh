@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from miniclaude.llm import token_counter
+from undomesh.llm import token_counter
 
 
 def test_token_count_falls_back_without_network(monkeypatch):

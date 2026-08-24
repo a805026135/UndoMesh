@@ -1,6 +1,6 @@
-# MiniClaude v0.5 Architecture
+# UndoMesh v0.5 Architecture
 
-MiniClaude is a lightweight Python harness runtime, not a clone of any one coding agent. The Query Loop emits immutable session/turn/step/model/tool events. A projection derives the model-visible conversation, so recovery, fork and compaction do not need to repeat side effects.
+UndoMesh is a lightweight Python harness runtime, not a clone of any one coding agent. The Query Loop emits immutable session/turn/step/model/tool events. A projection derives the model-visible conversation, so recovery, fork and compaction do not need to repeat side effects.
 
 The execution boundary is `ToolExecutor`: capability checks, canonical path validation, deny-first permission rules, provenance source-to-sink policy, timeout and audit run before or around every tool. Large values can be content-addressed as artifacts.
 

@@ -1,4 +1,4 @@
-# MiniClaude 与成熟 Coding Agent Harness 对标分析
+# UndoMesh 与成熟 Coding Agent Harness 对标分析
 
 更新日期：2026-08-22
 
@@ -14,7 +14,7 @@
 
 ## 2. 总体结论
 
-MiniClaude 已经覆盖 Coding Agent 的核心执行闭环，而且在“可恢复性证明”上形成了足够清晰的差异：它不是只记录模型消息或 Git Diff，而是把文件变更、备份依赖、恢复动作、会话回退和清理策略统一纳入可审计事务。
+UndoMesh 已经覆盖 Coding Agent 的核心执行闭环，而且在“可恢复性证明”上形成了足够清晰的差异：它不是只记录模型消息或 Git Diff，而是把文件变更、备份依赖、恢复动作、会话回退和清理策略统一纳入可审计事务。
 
 当前主要差距不在 Query Loop 本身，而在成熟产品经过长期迭代形成的外围能力：扩展协议、项目级指令发现、确定性 Hook、MCP 生态、应用服务协议、OS 级隔离、可观测性、评测规模和产品化交互。
 
@@ -24,9 +24,9 @@ MiniClaude 已经覆盖 Coding Agent 的核心执行闭环，而且在“可恢�
 
 ### 3.1 执行循环与持久化
 
-Codex、Claude Code 和 DeepSeek Harness 都把模型推理、工具调用、结果回填组织成长任务循环。DeepSeek Harness 明确把 append-only SessionEvent 日志作为事实源，再从日志投影模型历史；MiniClaude 已采用同类事件溯源思路，支持 SQLite 持久化、投影、Replay、Fork、压缩和运行时不变量校验。
+Codex、Claude Code 和 DeepSeek Harness 都把模型推理、工具调用、结果回填组织成长任务循环。DeepSeek Harness 明确把 append-only SessionEvent 日志作为事实源，再从日志投影模型历史；UndoMesh 已采用同类事件溯源思路，支持 SQLite 持久化、投影、Replay、Fork、压缩和运行时不变量校验。
 
-MiniClaude 的优势：
+UndoMesh 的优势：
 
 - 模型可见历史能够从事件重新投影，Replay 不重复工具副作用；
 - Turn、Step、Tool Call 有明确闭合不变量；
@@ -44,7 +44,7 @@ MiniClaude 的优势：
 
 Codex 支持从全局到项目子目录的 `AGENTS.md` 指令链，并规定明确的覆盖顺序；Skill 使用渐进披露，只在初始上下文暴露名称和描述，命中后读取完整内容。Claude Code 使用 `CLAUDE.md`、Skills、Subagents、Hooks、MCP 和 Plugins 分担不同类型的扩展需求。
 
-MiniClaude 已有二阶段 Skill 路由、显式调用、元信息、评估证据和候选版本晋升门禁，但还缺少成熟的项目扩展分发和诊断体验。
+UndoMesh 已有二阶段 Skill 路由、显式调用、元信息、评估证据和候选版本晋升门禁，但还缺少成熟的项目扩展分发和诊断体验。
 
 建议补充：
 
@@ -59,7 +59,7 @@ MiniClaude 已有二阶段 Skill 路由、显式调用、元信息、评估证�
 
 Claude Code 的 Hook 在固定生命周期事件上确定触发，可运行命令、HTTP、Prompt、Agent 或 MCP Tool；它把“模型应该遵守的指导”和“系统必须执行的约束”分开。DeepSeek Harness 的工具流水线提供 pre-execute、单调 Guard、around execute、post-execute、finalize 和 result 通知，并支持 native、code、both 三种工具呈现方式。
 
-MiniClaude 的 ToolExecutor 已统一执行能力检查、路径规范化、deny-first 权限、Provenance source-to-sink 策略、超时、结果外置和审计，但扩展点目前主要是代码内注册。
+UndoMesh 的 ToolExecutor 已统一执行能力检查、路径规范化、deny-first 权限、Provenance source-to-sink 策略、超时、结果外置和审计，但扩展点目前主要是代码内注册。
 
 建议补充：
 
@@ -72,13 +72,13 @@ MiniClaude 的 ToolExecutor 已统一执行能力检查、路径规范化、deny
 
 Codex 和 Claude Code 均通过 MCP 连接外部工具。Codex 的公开配置包含 STDIO、Streamable HTTP、OAuth、启动/调用超时、工具 allow/deny 和每工具审批策略。DeepSeek Harness 同时提供 Web、Headless、ACP、JSON-RPC 和 Python SDK 形态。
 
-MiniClaude 当前只支持内置 Tool Registry 和模型 Provider Adapter，桌面端直接调用本地应用对象。
+UndoMesh 当前只支持内置 Tool Registry 和模型 Provider Adapter，桌面端直接调用本地应用对象。
 
 建议补充：
 
 1. MCP Client：先支持 STDIO，再支持 Streamable HTTP 和 OAuth；远程工具默认 `prompt`。
 2. 对 MCP Tool Schema 做延迟发现和按需加载，避免工具数量增长吞噬上下文。
-3. MiniClaude App Server：以 JSON-RPC 或本地 HTTP 暴露 session、prompt、cancel、events、approval、checkpoint、restore。
+3. UndoMesh App Server：以 JSON-RPC 或本地 HTTP 暴露 session、prompt、cancel、events、approval、checkpoint、restore。
 4. Python SDK 只封装 App Server 协议，不复制运行时逻辑。
 5. Tool provenance 标记服务器、认证主体和调用链，外部结果默认低信任。
 
@@ -86,7 +86,7 @@ MiniClaude 当前只支持内置 Tool Registry 和模型 Provider Adapter，桌�
 
 Codex 和 Claude Code 提供子 Agent、并行任务与 Worktree 工作流；DeepSeek Harness 通过可替换 Subagent Provider、Agent Scope、Goal 和 Workflow 组合多种执行方式。
 
-MiniClaude 已有 `TaskContract`、依赖 DAG、读写集、Token/Deadline、冲突波次调度、父 Agent 验收和隔离副本，但仍是受控实验实现。
+UndoMesh 已有 `TaskContract`、依赖 DAG、读写集、Token/Deadline、冲突波次调度、父 Agent 验收和隔离副本，但仍是受控实验实现。
 
 建议补充：
 
@@ -100,7 +100,7 @@ MiniClaude 已有 `TaskContract`、依赖 DAG、读写集、Token/Deadline、冲
 
 成熟 Harness 普遍区分提示指导、权限审批和系统隔离。Claude Code 文档明确建议把必须保证的规则放到 Hook/Permission，而不是只写进 `CLAUDE.md`。DeepSeek Harness 把文件系统、子进程和 Sandbox 设计为可替换能力，并提供 Landlock 相关原生实现。
 
-MiniClaude 已有路径越界防护、CapabilitySet、deny-first 规则、危险命令分类、一次性审批、凭证脱敏和 Provenance source-to-sink 控制，这比只做关键词拦截更完整；但它仍不是 OS 容器。
+UndoMesh 已有路径越界防护、CapabilitySet、deny-first 规则、危险命令分类、一次性审批、凭证脱敏和 Provenance source-to-sink 控制，这比只做关键词拦截更完整；但它仍不是 OS 容器。
 
 建议补充：
 
@@ -114,7 +114,7 @@ MiniClaude 已有路径越界防护、CapabilitySet、deny-first 规则、危险
 
 Claude Code 每个用户 Prompt 形成 Checkpoint，可恢复代码、会话、二者或摘要；公开限制是只跟踪 Write/Edit/NotebookEdit，Bash 和外部改动不在 Checkpoint 范围，并建议继续使用版本控制。
 
-MiniClaude 在这个方向上的主要改进：
+UndoMesh 在这个方向上的主要改进：
 
 - 写工具默认通过 Change Transaction，而不是只做临时编辑快照；
 - 大文件删除在 unlink 前完成流式备份准入；
@@ -135,7 +135,7 @@ MiniClaude 在这个方向上的主要改进：
 
 DeepSeek Harness 提供可插拔 Session Telemetry 和 OpenTelemetry 后端，Codex/Claude Code 都有诊断、任务、Diff、Review、后台执行和多终端产品体验。
 
-MiniClaude 已有 201 个离线测试、18/18 固定 Benchmark，并增加恢复后台任务、可信 Plugin 激活和 Worktree 摘要审批三条纵向闭环；当前 Benchmark 仍是工程回归而非真实世界 Coding Agent 排名。
+UndoMesh 已有 201 个离线测试、18/18 固定 Benchmark，并增加恢复后台任务、可信 Plugin 激活和 Worktree 摘要审批三条纵向闭环；当前 Benchmark 仍是工程回归而非真实世界 Coding Agent 排名。
 
 建议补充：
 
@@ -173,7 +173,7 @@ MiniClaude 已有 201 个离线测试、18/18 固定 Benchmark，并增加恢复
 
 ## 5. 不应盲目复制的部分
 
-- 不要因为 DeepSeek Harness 采用 Cordis 就重写全部 Python Runtime。MiniClaude 当前规模下，稳定的接口和测试比通用插件内核更重要。
+- 不要因为 DeepSeek Harness 采用 Cordis 就重写全部 Python Runtime。UndoMesh 当前规模下，稳定的接口和测试比通用插件内核更重要。
 - 不要让 MCP、Hook、Skill 或 Code Mode 绕过 ToolExecutor；所有副作用必须汇入同一控制面。
 - 不要把真实模型的一次成功冒烟写成模型质量结论。
 - 不要宣称能回滚所有 Shell 或外部系统副作用。
@@ -181,4 +181,4 @@ MiniClaude 已有 201 个离线测试、18/18 固定 Benchmark，并增加恢复
 
 ## 6. 最终定位
 
-> MiniClaude 是一个面向长任务与高风险文件操作的、事件溯源且恢复优先的轻量 Coding Agent Harness。它吸收成熟项目在 Query Loop、Skill、权限、多 Agent 和客户端交互上的通用做法，但把主要创新集中在变更事务、分层备份、恢复租约、补偿事务和 Prompt Rewind 的可验证闭环。
+> UndoMesh 是一个面向长任务与高风险文件操作的、事件溯源且恢复优先的轻量 Coding Agent Harness。它吸收成熟项目在 Query Loop、Skill、权限、多 Agent 和客户端交互上的通用做法，但把主要创新集中在变更事务、分层备份、恢复租约、补偿事务和 Prompt Rewind 的可验证闭环。

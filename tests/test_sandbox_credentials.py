@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from miniclaude.execution import sandbox
-from miniclaude.execution.sandbox import (
+from undomesh.execution import sandbox
+from undomesh.execution.sandbox import (
     BubblewrapSandboxBackend,
     ProcessSandboxBackend,
     SandboxLevel,
@@ -11,7 +11,7 @@ from miniclaude.execution.sandbox import (
     detect_sandbox,
     sanitized_subprocess_env,
 )
-from miniclaude.security.credentials import KeyringCredentialStore, MemoryCredentialStore
+from undomesh.security.credentials import KeyringCredentialStore, MemoryCredentialStore
 
 
 def test_shell_environment_drops_credentials() -> None:

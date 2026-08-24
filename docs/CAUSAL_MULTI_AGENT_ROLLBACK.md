@@ -4,7 +4,7 @@
 
 多个 Agent 并行或串行工作时，后续任务可能读取前序任务的输出。只撤销被点名 Agent 的文件，会让依赖它的代码留在一个逻辑上不成立的状态。单纯按文件、时间或 Git Commit 回退也无法回答三个问题：谁依赖谁、应按什么顺序补偿、审批后待合并内容是否发生变化。
 
-MiniClaude 为每个 `TaskContract` 建立持久因果记录。显式依赖与读写集重叠共同形成依赖边；事务 Journal 同时记录 Session、Turn、Step、Agent、Task、Worktree、声明读写集和依赖任务，使文件变更能够回溯到产生它的子任务。
+UndoMesh 为每个 `TaskContract` 建立持久因果记录。显式依赖与读写集重叠共同形成依赖边；事务 Journal 同时记录 Session、Turn、Step、Agent、Task、Worktree、声明读写集和依赖任务，使文件变更能够回溯到产生它的子任务。
 
 ## 闭环
 

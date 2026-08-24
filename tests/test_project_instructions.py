@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from miniclaude.context.instructions import ProjectInstructionLoader
-from miniclaude.core.context import ConversationContext
+from undomesh.context.instructions import ProjectInstructionLoader
+from undomesh.core.context import ConversationContext
 
 
 def test_instruction_chain_is_broad_to_specific_and_override_wins(tmp_path: Path) -> None:

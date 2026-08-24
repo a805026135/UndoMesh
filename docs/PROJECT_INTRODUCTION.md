@@ -1,10 +1,10 @@
-# MiniClaude 完整项目介绍
+# UndoMesh 完整项目介绍
 
 ## 1. 项目概述
 
-MiniClaude 是一个使用 Python 实现的轻量 AI Coding Agent Harness。项目不绑定单一模型，也不以复刻某个商业 Coding Agent 为目标，而是研究一个模型如何在真实代码仓库中持续理解任务、调用工具、修改文件、管理上下文、委派子任务，并在发生错误时安全恢复。
+UndoMesh 是一个使用 Python 实现的轻量 AI Coding Agent Harness。项目不绑定单一模型，也不以复刻某个商业 Coding Agent 为目标，而是研究一个模型如何在真实代码仓库中持续理解任务、调用工具、修改文件、管理上下文、委派子任务，并在发生错误时安全恢复。
 
-项目的核心定位是“恢复优先”。普通 Coding Agent 往往把回退理解为反向应用 Diff、执行 Git reset，或者恢复编辑工具保存的临时快照。MiniClaude 将恢复拆成一个完整的工程系统：变更前建立证据、删除前完成备份准入、备份对象具有生命周期、恢复依赖受 Lease 保护、恢复本身写独立 Journal、提交前验证所有目标，崩溃后能够补偿或显式进入冲突状态。
+项目的核心定位是“恢复优先”。普通 Coding Agent 往往把回退理解为反向应用 Diff、执行 Git reset，或者恢复编辑工具保存的临时快照。UndoMesh 将恢复拆成一个完整的工程系统：变更前建立证据、删除前完成备份准入、备份对象具有生命周期、恢复依赖受 Lease 保护、恢复本身写独立 Journal、提交前验证所有目标，崩溃后能够补偿或显式进入冲突状态。
 
 截至 2026-08-24，阶段 0–21 的本地核心与适配层已完成，并补齐三条可现场演示的纵向闭环；离线回归为 201 passed、1 个平台能力相关 skip，固定 Benchmark 为 18/18。外部标准数据集成绩、平台证书签名和未在当前宿主运行的隔离能力不计入完成声明。
 
@@ -19,7 +19,7 @@ MiniClaude 是一个使用 Python 实现的轻量 AI Coding Agent Harness。项�
 5. Agent 删除了未提交代码、二进制数据或 10 GiB 文件时，Git 无法恢复怎么办？
 6. 如果恢复缓存被清理、密钥丢失、文件被用户再次修改或者恢复中断，系统应如何表达失败？
 
-MiniClaude 的目标不是隐藏这些问题，而是让它们成为有状态、有证据、有失败语义的运行时能力。
+UndoMesh 的目标不是隐藏这些问题，而是让它们成为有状态、有证据、有失败语义的运行时能力。
 
 ## 3. 设计原则
 
@@ -49,7 +49,7 @@ Tool、Skill、子 Agent 和客户端最终都经过 ToolExecutor。路径校验
 CLI / Desktop / Non-interactive Command
                  │
                  ▼
-        MiniClaude Application
+        UndoMesh Application
                  │
       ┌──────────┼──────────┐
       ▼          ▼          ▼
@@ -107,7 +107,7 @@ Projection 把事件折叠为模型可见消息。上下文压缩通过 `CONTEXT
 
 ## 6. 上下文与记忆治理
 
-MiniClaude 维护 Token Budget，分别估算系统提示、历史消息、工具 Schema 和保留余量。接近限制时执行结构化压缩；若 Provider 返回 Context Overflow，则从事件历史重新压缩并重试。
+UndoMesh 维护 Token Budget，分别估算系统提示、历史消息、工具 Schema 和保留余量。接近限制时执行结构化压缩；若 Provider 返回 Context Overflow，则从事件历史重新压缩并重试。
 
 关键策略：
 
@@ -220,7 +220,7 @@ Unified Diff 不适合大二进制文件，因此提供专用删除事务。它�
 
 代码恢复先执行无写入 Preview。任何冲突或缺失依赖都会在第一处工作区写入前终止。`both` 涉及文件与 Event Store 两个持久域，不宣称分布式原子；如果代码恢复已经完成但 Fork 失败，失败事件会记录 Restore ID 和 `code_restore_completed=true`。
 
-相比 Claude Code 公开的 Checkpoint 限制，MiniClaude 的差异在于支持受控写工具和大文件删除事务、明确的缓存生命周期、恢复 Lease、独立补偿 Journal 和恢复健康证明。但它同样不能自动撤销任意网络、数据库或部署副作用。
+相比 Claude Code 公开的 Checkpoint 限制，UndoMesh 的差异在于支持受控写工具和大文件删除事务、明确的缓存生命周期、恢复 Lease、独立补偿 Journal 和恢复健康证明。但它同样不能自动撤销任意网络、数据库或部署副作用。
 
 ## 13. 受控多 Agent
 
@@ -284,7 +284,7 @@ Tk 只运行在 UI 主线程，Asyncio 和 SQLite 在背景线程创建和使用
 - 从 Codex 借鉴：项目/任务组织、Skills 渐进披露、权限监督、Worktree 与 Review 思路；
 - 从 Claude Code 借鉴：Query Loop、Checkpoint 交互语义、Hook/Skill/Permission 职责分离；
 - 从 DeepSeek Harness 借鉴：Event-sourced Session、Capability Seam、可组合 Tool Pipeline 和模型/工具解耦；
-- MiniClaude 的自主重点：恢复优先的 Change/Restore 双事务、Warm/Hot 分层、恢复 Lease、健康证明、Provenance source-to-sink 和证据门控 Skill 演进。
+- UndoMesh 的自主重点：恢复优先的 Change/Restore 双事务、Warm/Hot 分层、恢复 Lease、健康证明、Provenance source-to-sink 和证据门控 Skill 演进。
 
 详细对标与补充路线见 `docs/COMPETITIVE_ANALYSIS.md`。
 
@@ -310,12 +310,12 @@ Tk 只运行在 UI 主线程，Asyncio 和 SQLite 在背景线程创建和使用
 python -m pip install -e ".[dev]"
 
 # CLI
-miniclaude
+undomesh
 
 # 桌面客户端
-miniclaude-desktop
+undomesh-desktop
 # 或
-python -m miniclaude --gui
+python -m undomesh --gui
 
 # 全量测试
 python -m pytest -q

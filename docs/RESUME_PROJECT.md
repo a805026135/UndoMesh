@@ -1,8 +1,8 @@
-# MiniClaude 简历项目描述
+# UndoMesh 简历项目描述
 
 ## 推荐版本
 
-**MiniClaude · 可回放、可恢复的 AI Coding Agent Harness　2026.02–2026.03**  
+**UndoMesh · 可回放、可恢复的 AI Coding Agent Harness　2026.02–2026.03**
 **技术栈：** Python / Event Sourcing / Query Loop / Tool Calling / AES-GCM / SQLite / Multi-Agent / Tkinter
 
 **项目简介：** 独立设计并实现轻量 Coding Agent Runtime，围绕 Query Loop、事件溯源和统一 ToolExecutor 构建模型推理—工具执行闭环；在借鉴 Codex、Claude Code 与 DeepSeek Harness 通用架构的基础上，将“可证明恢复”作为核心差异，覆盖长任务上下文、Skill 路由、权限审查、受控多 Agent、分层备份及 Prompt Rewind。
@@ -16,7 +16,7 @@
 
 ## 一页简历压缩版
 
-**MiniClaude · AI Coding Agent Harness** — Python / Event Sourcing / Tool Calling / AES-GCM / Multi-Agent
+**UndoMesh · AI Coding Agent Harness** — Python / Event Sourcing / Tool Calling / AES-GCM / Multi-Agent
 
 - 基于 append-only 事件流实现 Query Loop、Replay/Fork、上下文压缩和 Tool Call/Result 配对保护，统一多模型 Provider 与受控工具执行。
 - 设计恢复优先的 Change/Restore 双事务：内容定义分块、压缩去重、AES-GCM、2 GiB Warm Store、24 小时大文件 Hot Vault、恢复租约、冲突检测和崩溃补偿。

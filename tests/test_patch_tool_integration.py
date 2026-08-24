@@ -3,10 +3,10 @@ import subprocess
 
 import pytest
 
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.execution.capabilities import CapabilitySet, ToolExecutionContext
-from miniclaude.security.permission import PermissionManager
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.execution.capabilities import CapabilitySet, ToolExecutionContext
+from undomesh.security.permission import PermissionManager
+from undomesh.tools.registry import ToolRegistry
 
 
 @pytest.mark.asyncio

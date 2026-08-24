@@ -7,7 +7,7 @@ import random
 
 import pytest
 
-from miniclaude.execution.backup_store import (
+from undomesh.execution.backup_store import (
     BackupStoreError,
     ChunkingPolicy,
     EncryptedChunkStore,

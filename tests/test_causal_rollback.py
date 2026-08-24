@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from miniclaude.agents.causal import CausalTaskLedger, CausalWorktreeCoordinator
-from miniclaude.agents.contracts import TaskContract
-from miniclaude.core.config import MiniClaudeConfig
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.execution.capabilities import CapabilitySet, ToolExecutionContext
-from miniclaude.execution.transactions import DurableChangeEngine
-from miniclaude.execution.worktrees import GitWorktreeManager
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.agents.causal import CausalTaskLedger, CausalWorktreeCoordinator
+from undomesh.agents.contracts import TaskContract
+from undomesh.core.config import UndoMeshConfig
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.execution.capabilities import CapabilitySet, ToolExecutionContext
+from undomesh.execution.transactions import DurableChangeEngine
+from undomesh.execution.worktrees import GitWorktreeManager
+from undomesh.tools.registry import ToolRegistry
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -106,7 +106,7 @@ def test_review_refuses_parent_head_drift(tmp_path: Path) -> None:
     workflow = GitWorktreeManager(repo, tmp_path / "worktrees")
     receipt = workflow.create()
     (receipt.path / "agent.txt").write_text("candidate\n", encoding="utf-8")
-    from miniclaude.execution.worktrees import WorktreeReviewWorkflow
+    from undomesh.execution.worktrees import WorktreeReviewWorkflow
 
     review_workflow = WorktreeReviewWorkflow(workflow)
     review = review_workflow.review(
@@ -131,7 +131,7 @@ async def test_contract_write_set_and_causal_journal_are_enforced(tmp_path: Path
     project.mkdir()
     (project / "allowed.txt").write_text("old\n", encoding="utf-8")
     (project / "denied.txt").write_text("keep\n", encoding="utf-8")
-    config = MiniClaudeConfig(
+    config = UndoMeshConfig(
         project_dir=str(project),
         transactional_changes_only=True,
         allow_shell=False,

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from miniclaude.context.event_compactor import EventCompactor
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.projection import project_messages
-from miniclaude.runtime.store import InMemoryEventStore
+from undomesh.context.event_compactor import EventCompactor
+from undomesh.runtime.events import EventType
+from undomesh.runtime.projection import project_messages
+from undomesh.runtime.store import InMemoryEventStore
 
 
 def _closed_tool_step(store: InMemoryEventStore, session: str, index: int) -> None:

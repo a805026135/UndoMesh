@@ -7,11 +7,11 @@ import subprocess
 
 import pytest
 
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.security.permission import PermissionManager
-from miniclaude.tools.registry import ToolRegistry
-from miniclaude.execution.patches import PatchSet
-from miniclaude.execution.transactions import (
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.security.permission import PermissionManager
+from undomesh.tools.registry import ToolRegistry
+from undomesh.execution.patches import PatchSet
+from undomesh.execution.transactions import (
     DurableChangeEngine,
     RetentionPolicy,
     TransactionConflictError,

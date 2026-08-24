@@ -1,5 +1,5 @@
-from miniclaude.core.config import MiniClaudeConfig
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.core.config import UndoMeshConfig
+from undomesh.tools.registry import ToolRegistry
 
 
 def test_default_registry_has_no_mutation_bypass(config) -> None:
@@ -11,7 +11,7 @@ def test_default_registry_has_no_mutation_bypass(config) -> None:
 
 
 def test_legacy_mutation_tools_require_explicit_opt_in(tmp_project) -> None:
-    config = MiniClaudeConfig(
+    config = UndoMeshConfig(
         project_dir=str(tmp_project),
         transactional_changes_only=False,
         allow_shell=True,

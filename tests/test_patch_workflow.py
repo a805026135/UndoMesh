@@ -4,7 +4,7 @@ import sys
 
 import pytest
 
-from miniclaude.execution.patches import GitPatchWorkflow, PatchSet, PatchValidationError
+from undomesh.execution.patches import GitPatchWorkflow, PatchSet, PatchValidationError
 
 
 def test_patch_rejects_escape_and_malformed() -> None:

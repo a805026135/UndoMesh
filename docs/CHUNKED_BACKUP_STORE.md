@@ -21,7 +21,7 @@ The format is self-describing (`MCC1` header, compression/encryption flags, key 
 
 ## Encryption and keys
 
-Encryption is enabled by default. If `MINICLAUDE_TRANSACTION_BACKUP_KEY` contains a 32-byte hex/base64 key, chunks use that external key. Otherwise MiniClaude generates an owner-only local AES key under `transactions/keys/`; key IDs allow existing chunks to identify the required key. AES-GCM rejects modified ciphertext, header/AAD mismatches and wrong keys.
+Encryption is enabled by default. If `UNDOMESH_TRANSACTION_BACKUP_KEY` contains a 32-byte hex/base64 key, chunks use that external key. Otherwise UndoMesh generates an owner-only local AES key under `transactions/keys/`; key IDs allow existing chunks to identify the required key. AES-GCM rejects modified ciphertext, header/AAD mismatches and wrong keys.
 
 The local-key fallback protects chunks copied without their key but does not protect against an attacker who can read the entire transaction directory. Losing an external key makes its backups unrecoverable. Keyring-backed keys, rotation/re-encryption and recovery-key export are future work. Filenames and manifests expose content hashes, sizes and equality even though file bytes are encrypted.
 

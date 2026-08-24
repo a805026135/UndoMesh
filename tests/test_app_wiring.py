@@ -4,15 +4,15 @@ from __future__ import annotations
 
 import pytest
 
-from miniclaude.app import MiniClaudeApp
-from miniclaude.runtime.store import SQLiteEventStore
+from undomesh.app import UndoMeshApp
+from undomesh.runtime.store import SQLiteEventStore
 
 
 @pytest.mark.asyncio
 async def test_app_wires_security_context_and_durable_events(config, tmp_path):
     config.event_db = str(tmp_path / "runtime.db")
     config.skill_eval_db = str(tmp_path / "skills.db")
-    app = MiniClaudeApp(config)
+    app = UndoMeshApp(config)
 
     await app.initialize()
 

@@ -6,10 +6,10 @@ import asyncio
 
 import pytest
 
-from miniclaude.agents.contracts import ContractResult, TaskContract, TaskStatus
-from miniclaude.agents.scheduler import ContractScheduler, ContractValidationError, paths_conflict
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.store import InMemoryEventStore
+from undomesh.agents.contracts import ContractResult, TaskContract, TaskStatus
+from undomesh.agents.scheduler import ContractScheduler, ContractValidationError, paths_conflict
+from undomesh.runtime.events import EventType
+from undomesh.runtime.store import InMemoryEventStore
 
 
 def test_path_conflicts_are_conservative() -> None:

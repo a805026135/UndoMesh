@@ -8,7 +8,7 @@ The local implementation is complete at the reusable-core and adapter level. Pla
 
 ### Application service and durable command queue
 
-`AppService` owns a SQLite `JobStore` and `SingleWriterCommandQueue`. Jobs transition through `queued`, `running`, `succeeded`, `failed`, `cancelled` and `interrupted`. Only one mutating handler executes at a time. Progress and cancellation are persisted. Startup converts abandoned `running` jobs to `interrupted`; it never silently re-executes a possibly non-idempotent operation. Resume is explicit. `python -m miniclaude --app-server` exposes newline-delimited JSON-RPC over stdio, and the same service is used by the Python SDK.
+`AppService` owns a SQLite `JobStore` and `SingleWriterCommandQueue`. Jobs transition through `queued`, `running`, `succeeded`, `failed`, `cancelled` and `interrupted`. Only one mutating handler executes at a time. Progress and cancellation are persisted. Startup converts abandoned `running` jobs to `interrupted`; it never silently re-executes a possibly non-idempotent operation. Resume is explicit. `python -m undomesh --app-server` exposes newline-delimited JSON-RPC over stdio, and the same service is used by the Python SDK.
 
 ### Authenticated manifests and rotation
 
@@ -48,7 +48,7 @@ Telemetry is disabled by default. When enabled, it records spans/metrics through
 
 ### SDK and RPC/ACP
 
-`MiniClaudeClient` is an asynchronous SDK over `AppService`: submit, get, cancel, resume, stream and prompt. `JSONRPCDispatcher` exposes job operations plus `agent/session/new` and `agent/prompt` ACP-style methods. Runtime, recovery and permission logic stay in the application service.
+`UndoMeshClient` is an asynchronous SDK over `AppService`: submit, get, cancel, resume, stream and prompt. `JSONRPCDispatcher` exposes job operations plus `agent/session/new` and `agent/prompt` ACP-style methods. Runtime, recovery and permission logic stay in the application service.
 
 ### Plugins and controlled Code Mode
 
@@ -72,7 +72,7 @@ Run:
 python -m pytest -q
 python scripts/run_offline_benchmarks.py
 python scripts/release_check.py
-python -m compileall -q miniclaude
+python -m compileall -q undomesh
 git diff --check
 ```
 

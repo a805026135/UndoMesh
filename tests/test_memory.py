@@ -7,10 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from miniclaude.memory.models import MemoryEntry
-from miniclaude.memory.store import MemoryStore
-from miniclaude.memory.types import MemoryType
-from miniclaude.memory.retriever import MemoryRetriever
+from undomesh.memory.models import MemoryEntry
+from undomesh.memory.store import MemoryStore
+from undomesh.memory.types import MemoryType
+from undomesh.memory.retriever import MemoryRetriever
 
 
 @pytest.fixture

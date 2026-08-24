@@ -24,7 +24,7 @@ REQUIRED = (
 def main() -> None:
     missing = [item for item in REQUIRED if not (ROOT / item).exists()]
     tests = subprocess.run([sys.executable, "-m", "pytest", "-q"], cwd=ROOT).returncode
-    compile_result = subprocess.run([sys.executable, "-m", "compileall", "-q", "miniclaude"], cwd=ROOT).returncode
+    compile_result = subprocess.run([sys.executable, "-m", "compileall", "-q", "undomesh"], cwd=ROOT).returncode
     report = {"missing": missing, "tests_exit_code": tests, "compile_exit_code": compile_result, "ready": not missing and tests == 0 and compile_result == 0}
     print(json.dumps(report, indent=2))
     raise SystemExit(0 if report["ready"] else 1)

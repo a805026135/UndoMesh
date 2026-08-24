@@ -3,13 +3,13 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 
-from miniclaude.core.context import ConversationContext
-from miniclaude.execution.patches import PatchSet
-from miniclaude.execution.transactions import DurableChangeEngine
-from miniclaude.runtime.checkpoints import CheckpointManager, RewindMode
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.projection import project_messages
-from miniclaude.runtime.store import InMemoryEventStore
+from undomesh.core.context import ConversationContext
+from undomesh.execution.patches import PatchSet
+from undomesh.execution.transactions import DurableChangeEngine
+from undomesh.runtime.checkpoints import CheckpointManager, RewindMode
+from undomesh.runtime.events import EventType
+from undomesh.runtime.projection import project_messages
+from undomesh.runtime.store import InMemoryEventStore
 
 
 class FailingForkStore(InMemoryEventStore):

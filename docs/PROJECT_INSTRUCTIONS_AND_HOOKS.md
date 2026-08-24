@@ -6,23 +6,23 @@ Stage 19 begins with two control-plane primitives that do not bypass the existin
 
 `ProjectInstructionLoader` reads trusted guidance in broad-to-specific order:
 
-1. user directory: `~/.miniclaude/AGENTS.override.md`, otherwise `AGENTS.md`;
+1. user directory: `~/.undomesh/AGENTS.override.md`, otherwise `AGENTS.md`;
 2. project root;
 3. each directory from the project root to the active working directory.
 
 At each directory, `AGENTS.override.md` replaces `AGENTS.md`; configured fallback filenames are considered afterward. Empty files are ignored. The combined UTF-8 byte budget defaults to 32 KiB, files are never partially injected, and diagnostics report every source, scope, size and whether discovery was truncated.
 
 ```text
-python -m miniclaude --instructions
+python -m undomesh --instructions
 ```
 
 The content is inserted into the system prompt as project instructions. It is read as guidance only and cannot grant tools, widen paths or override permission rules.
 
 Configuration:
 
-- `MINICLAUDE_INSTRUCTION_MAX_BYTES=32768`
-- `MINICLAUDE_INSTRUCTION_FALLBACK_NAMES=TEAM_GUIDE.md,.agents.md`
-- `MINICLAUDE_INSTRUCTION_USER_DIR=`; empty means `~/.miniclaude`
+- `UNDOMESH_INSTRUCTION_MAX_BYTES=32768`
+- `UNDOMESH_INSTRUCTION_FALLBACK_NAMES=TEAM_GUIDE.md,.agents.md`
+- `UNDOMESH_INSTRUCTION_USER_DIR=`; empty means `~/.undomesh`
 
 ## Lifecycle Hook Bus
 
@@ -42,7 +42,7 @@ deny > ask > allow > abstain
 A later allow cannot undo a deny. A pre-tool Hook exception fails closed by default; post/failure observers cannot rewrite a ToolResult. Every enforceable invocation, completion or failure is appended as `hook.invoked`, `hook.completed` or `hook.failed`, with ordinary event-store redaction applied.
 
 ```python
-from miniclaude.runtime import HookOutcome, HookPoint, HookVerdict
+from undomesh.runtime import HookOutcome, HookPoint, HookVerdict
 
 app.hook_bus.register(
     lambda ctx: HookOutcome(HookVerdict.DENY, "release branch is read-only"),
@@ -53,7 +53,7 @@ app.hook_bus.register(
 )
 ```
 
-Use `python -m miniclaude --hooks` or REPL `/hooks` to inspect registrations. REPL `/instructions` shows the instruction chain.
+Use `python -m undomesh --hooks` or REPL `/hooks` to inspect registrations. REPL `/instructions` shows the instruction chain.
 
 ## Security boundary
 
@@ -61,7 +61,7 @@ Project text is not enforcement. Hook enforcement cannot expand CapabilitySet, r
 
 ## Shell sandbox backends
 
-`MINICLAUDE_SANDBOX_BACKEND` accepts `process`, `auto`, or `bubblewrap`. The portable default retains the existing process-group controls and does not claim kernel containment. On Linux, the explicit Bubblewrap backend exposes the host filesystem read-only, remounts only the project root writable, changes into a previously boundary-checked project directory, creates fresh process/device/temp mounts, and disables networking unless `MINICLAUDE_SANDBOX_NETWORK_ENABLED=true`. `auto` selects it only when available.
+`UNDOMESH_SANDBOX_BACKEND` accepts `process`, `auto`, or `bubblewrap`. The portable default retains the existing process-group controls and does not claim kernel containment. On Linux, the explicit Bubblewrap backend exposes the host filesystem read-only, remounts only the project root writable, changes into a previously boundary-checked project directory, creates fresh process/device/temp mounts, and disables networking unless `UNDOMESH_SANDBOX_NETWORK_ENABLED=true`. `auto` selects it only when available.
 
 Bubblewrap can additionally apply `prlimit` memory/CPU/process quotas and an inherited compiled seccomp BPF FD. Windows Job Objects provide kill-on-close and memory/CPU/process-count limits, while honestly reporting that Windows filesystem and networking are not isolated. Subprocess credentials are scrubbed for every backend.
 

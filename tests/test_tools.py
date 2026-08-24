@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from miniclaude.tools.file_tools import ReadFileTool, WriteFileTool, EditFileTool, GlobTool, GrepTool
-from miniclaude.tools.shell_tools import ShellTool
+from undomesh.tools.file_tools import ReadFileTool, WriteFileTool, EditFileTool, GlobTool, GrepTool
+from undomesh.tools.shell_tools import ShellTool
 
 
 class TestReadFileTool:
@@ -64,10 +64,10 @@ class TestEditFileTool:
         result = await tool.execute(
             path=path,
             old_string='print("Hello, World!")',
-            new_string='print("Hi, MiniClaude!")',
+            new_string='print("Hi, UndoMesh!")',
         )
         assert result.success
-        assert "Hi, MiniClaude!" in (tmp_project / "hello.py").read_text()
+        assert "Hi, UndoMesh!" in (tmp_project / "hello.py").read_text()
 
     @pytest.mark.asyncio
     async def test_edit_nonexistent(self, config, tmp_project: Path):

@@ -1,4 +1,4 @@
-# MiniClaude 面试 QA
+# UndoMesh 面试 QA
 
 本文用于准备项目面试。回答模板强调事实、取舍和边界，不建议逐字背诵。面试时先给一句结论，再根据追问展开状态机、数据结构、失败场景和测试证据。
 
@@ -6,7 +6,7 @@
 
 ### Q1：请用一分钟介绍这个项目。
 
-MiniClaude 是一个用 Python 实现的恢复优先 AI Coding Agent Harness。它用 append-only 事件流驱动 Query Loop，将文件修改和恢复分别建模为可审计事务，并通过分层加密备份、Lease、完整预检、哈希验证和崩溃补偿保护未提交内容。Restore/Rewind/Audit 进入持久单写者队列；受信 Plugin 统一激活 Hook/MCP 并显式批准 Capability；多 Agent 候选使用真实 Worktree、验证和 Diff 摘要审批后合并。目前 201 项离线测试、18/18 固定 Benchmark 和一键无 Key 纵向 Demo 通过。
+UndoMesh 是一个用 Python 实现的恢复优先 AI Coding Agent Harness。它用 append-only 事件流驱动 Query Loop，将文件修改和恢复分别建模为可审计事务，并通过分层加密备份、Lease、完整预检、哈希验证和崩溃补偿保护未提交内容。Restore/Rewind/Audit 进入持久单写者队列；受信 Plugin 统一激活 Hook/MCP 并显式批准 Capability；多 Agent 候选使用真实 Worktree、验证和 Diff 摘要审批后合并。目前 201 项离线测试、18/18 固定 Benchmark 和一键无 Key 纵向 Demo 通过。
 
 ### Q2：为什么叫 Harness，而不是普通聊天机器人？
 
@@ -18,7 +18,7 @@ MiniClaude 是一个用 Python 实现的恢复优先 AI Coding Agent Harness。�
 
 ### Q4：这个项目解决了什么真实问题？
 
-Coding Agent 会连续修改多个文件，也可能误删未提交数据。Git 只能恢复被版本控制保存的历史；编辑器 Checkpoint 往往只跟踪自己的编辑工具；大文件无法塞进普通 Diff。MiniClaude 解决的是 Agent 自身写操作的可追踪、可审计和有界恢复，并明确哪些操作不在保证范围内。
+Coding Agent 会连续修改多个文件，也可能误删未提交数据。Git 只能恢复被版本控制保存的历史；编辑器 Checkpoint 往往只跟踪自己的编辑工具；大文件无法塞进普通 Diff。UndoMesh 解决的是 Agent 自身写操作的可追踪、可审计和有界恢复，并明确哪些操作不在保证范围内。
 
 ### Q5：为什么不直接使用 Codex、Claude Code 或 DeepSeek Harness？
 
@@ -26,7 +26,7 @@ Coding Agent 会连续修改多个文件，也可能误删未提交数据。Git 
 
 ### Q6：你如何证明不是重复造轮子？
 
-第一，项目没有重新训练模型，也没有发明另一套 Tool Calling 协议，而是复用 OpenAI-compatible API、SQLite、AES-GCM 等成熟组件。第二，竞品已有能力只做必要的轻量实现。第三，差异化问题明确：Claude Code 公开文档说明 Bash 修改不属于 Checkpoint，MiniClaude 让支持的写工具默认进入事务，并为大文件删除提供独立入口。第四，所有差异都有故障注入测试，而不是只做功能描述。
+第一，项目没有重新训练模型，也没有发明另一套 Tool Calling 协议，而是复用 OpenAI-compatible API、SQLite、AES-GCM 等成熟组件。第二，竞品已有能力只做必要的轻量实现。第三，差异化问题明确：Claude Code 公开文档说明 Bash 修改不属于 Checkpoint，UndoMesh 让支持的写工具默认进入事务，并为大文件删除提供独立入口。第四，所有差异都有故障注入测试，而不是只做功能描述。
 
 ## 二、核心执行循环
 
@@ -232,7 +232,7 @@ Warm Store 根据 committed/terminal 状态、保留天数、Pin、重要度、�
 
 ### Q54：unlink 等于安全擦除吗？
 
-不等于。SSD 磨损均衡、文件系统快照、云同步和备份都可能保留数据。项目只承诺 MiniClaude 解除本地对象引用，不宣称取证级擦除。
+不等于。SSD 磨损均衡、文件系统快照、云同步和备份都可能保留数据。项目只承诺 UndoMesh 解除本地对象引用，不宣称取证级擦除。
 
 ## 九、Restore Transaction 与 Rewind
 
@@ -274,11 +274,11 @@ Code 只恢复文件；Conversation Fork 到历史边界但保留当前代码；
 
 ### Q64：和 Claude Code Checkpoint 相比改进在哪里？
 
-Claude Code 公开文档说明只跟踪其 Write/Edit/NotebookEdit，Bash 和外部改动不跟踪。MiniClaude 同样不声称回滚任意外部副作用，但它把自身支持的文件写、Patch 和大文件删除统一收敛到 Change Transaction，并增加分层加密存储、恢复 Lease、健康预览、独立补偿事务和崩溃恢复。
+Claude Code 公开文档说明只跟踪其 Write/Edit/NotebookEdit，Bash 和外部改动不跟踪。UndoMesh 同样不声称回滚任意外部副作用，但它把自身支持的文件写、Patch 和大文件删除统一收敛到 Change Transaction，并增加分层加密存储、恢复 Lease、健康预览、独立补偿事务和崩溃恢复。
 
 ### Q65：为什么还需要 Git？
 
-本地恢复解决短期 Agent 误操作；Git 解决长期版本、协作、审查和远端复制。两者层级不同。MiniClaude 明确不把 Checkpoint 当版本控制替代品。
+本地恢复解决短期 Agent 误操作；Git 解决长期版本、协作、审查和远端复制。两者层级不同。UndoMesh 明确不把 Checkpoint 当版本控制替代品。
 
 ## 十、多 Agent
 
@@ -304,7 +304,7 @@ Scheduler 在启动前比较规范化写集。写集有交集的任务不能进�
 
 ### Q70.1：为什么多 Agent 回退不能只撤销目标 Agent 的 Commit？
 
-后代任务可能读取它产生的接口、Schema 或文件。只撤销根任务会留下语法可用但语义失效的代码。MiniClaude 合并显式 dependencies 与读写集重叠关系，计算传递影响闭包，再按逆拓扑顺序撤销，保证先处理消费者、最后处理被依赖者。
+后代任务可能读取它产生的接口、Schema 或文件。只撤销根任务会留下语法可用但语义失效的代码。UndoMesh 合并显式 dependencies 与读写集重叠关系，计算传递影响闭包，再按逆拓扑顺序撤销，保证先处理消费者、最后处理被依赖者。
 
 ### Q70.2：级联回退和重放有什么区别？
 
@@ -340,7 +340,7 @@ CLI 适合开发者、脚本和远程环境；桌面端适合任务导航、模�
 
 ### Q77：Tkinter 和 Asyncio 怎么协作？
 
-Tk 主循环固定在主线程；MiniClaude Asyncio Loop 和 SQLite Connection 在背景线程创建并使用；背景结果通过 `root.after` 回到 UI 线程。审批 Modal 也通过主线程调度，背景操作等待用户结果。
+Tk 主循环固定在主线程；UndoMesh Asyncio Loop 和 SQLite Connection 在背景线程创建并使用；背景结果通过 `root.after` 回到 UI 线程。审批 Modal 也通过主线程调度，背景操作等待用户结果。
 
 ### Q78：长时间恢复会冻结 UI 吗？
 
@@ -376,7 +376,7 @@ Tk 主循环固定在主线程；MiniClaude Asyncio Loop 和 SQLite Connection �
 
 ### Q85：为什么不用 Git 实现全部恢复？
 
-Git 对已提交文本版本很强，但 Agent 可能处理未跟踪文件、未提交修改、大二进制和临时数据。自动提交还会污染历史，也不能表达缓存到期、密钥和恢复 Lease。MiniClaude 把 Git 视为 T3 长期来源，而不是唯一短期恢复机制。
+Git 对已提交文本版本很强，但 Agent 可能处理未跟踪文件、未提交修改、大二进制和临时数据。自动提交还会污染历史，也不能表达缓存到期、密钥和恢复 Lease。UndoMesh 把 Git 视为 T3 长期来源，而不是唯一短期恢复机制。
 
 ### Q86：完整保存文件是不是浪费空间？
 
@@ -392,7 +392,7 @@ Git 对已提交文本版本很强，但 Agent 可能处理未跟踪文件、未
 
 ### Q89：为什么不现在就做“万物皆插件”？
 
-插件内核会引入生命周期、依赖图、版本、隔离、配置合并和错误传播复杂度。MiniClaude 当前更需要稳定 Capability Seam。先让 Hook、Storage、Sandbox、Provider 和 Tool 有清晰接口，再根据真实替换需求插件化，避免为了架构漂亮而重写。
+插件内核会引入生命周期、依赖图、版本、隔离、配置合并和错误传播复杂度。UndoMesh 当前更需要稳定 Capability Seam。先让 Hook、Storage、Sandbox、Provider 和 Tool 有清晰接口，再根据真实替换需求插件化，避免为了架构漂亮而重写。
 
 ### Q90：项目最大的技术债是什么？
 
@@ -410,7 +410,7 @@ OS 级 Sandbox、应用服务单写者/后台任务、Manifest/Key 管理、大�
 
 ### Q93：从 Codex 最值得学习什么？
 
-分层 `AGENTS.md`、Skills 渐进披露、MCP 审批配置、Worktree/Review 工作流、App Server/SDK 和任务化客户端。MiniClaude 应吸收这些生态接口，但保持副作用统一经过 ToolExecutor。
+分层 `AGENTS.md`、Skills 渐进披露、MCP 审批配置、Worktree/Review 工作流、App Server/SDK 和任务化客户端。UndoMesh 应吸收这些生态接口，但保持副作用统一经过 ToolExecutor。
 
 ### Q94：从 Claude Code 最值得学习什么？
 
@@ -420,7 +420,7 @@ Hook、Permission、Skill、Subagent 的职责分离，以及 `/doctor`、`/cont
 
 Service Definition/Provider/Consumer Capability Seam、可组合 Tool Pipeline、Event-sourced Session、Projection Cache、OpenTelemetry 和多种 Carrier。Code Mode 值得实验，但必须排在 Sandbox 和权限成熟之后。
 
-### Q96：MiniClaude 相比三者还有什么独特价值？
+### Q96：UndoMesh 相比三者还有什么独特价值？
 
 它把短期文件安全作为主架构，而不是附属 Undo：Change/Restore 双 Journal、Warm/Hot 分层、Chunk 加密去重、Lease、恢复健康、崩溃补偿和显式清理审批组成一个完整闭环。同时它规模较小，适合解释和实验每个不变量。
 

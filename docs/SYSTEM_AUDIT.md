@@ -1,10 +1,10 @@
-# MiniClaude System Audit
+# UndoMesh System Audit
 
 Audit date: 2026-08-22
 
 ## Completion status
 
-The planned implementation through Stage 18 is complete. MiniClaude now has a replayable event runtime, transactional file mutation, tiered encrypted recovery storage, independent compensating restores, prompt checkpoints, four rewind modes, multi-provider model configuration, controlled sub-agents, a Rich CLI and a Tk desktop client.
+The planned implementation through Stage 18 is complete. UndoMesh now has a replayable event runtime, transactional file mutation, tiered encrypted recovery storage, independent compensating restores, prompt checkpoints, four rewind modes, multi-provider model configuration, controlled sub-agents, a Rich CLI and a Tk desktop client.
 
 Release evidence:
 
@@ -19,7 +19,7 @@ Release evidence:
 
 ### What is now differentiated
 
-MiniClaude's recovery path is not a thin Git undo wrapper. Every accepted mutation has pre/post hashes and a durable Change Journal. Large deletions are admitted before unlink, streamed into an encrypted content-defined chunk store, and separated into bounded warm retention or a 24-hour hot vault. Recovery itself is a new transaction with its own Journal, dependency lease, complete materialization, hash verification, second live-workspace conflict check, commit receipt and crash compensation.
+UndoMesh's recovery path is not a thin Git undo wrapper. Every accepted mutation has pre/post hashes and a durable Change Journal. Large deletions are admitted before unlink, streamed into an encrypted content-defined chunk store, and separated into bounded warm retention or a 24-hour hot vault. Recovery itself is a new transaction with its own Journal, dependency lease, complete materialization, hash verification, second live-workspace conflict check, commit receipt and crash compensation.
 
 Prompt rewind composes this storage layer with the append-only event model. A checkpoint can restore code, fork conversation, do both, or shadow later context with a summary. Original change journals and source session events remain immutable audit evidence. This improves on checkpoint systems that only track agent edits, only revert Git commits, or silently lose rollback ability when a local cache is cleaned.
 
@@ -37,7 +37,7 @@ Prompt rewind composes this storage layer with the append-only event model. A ch
 
 - Atomic rename is per path, not a filesystem-wide atomic commit across many paths.
 - Shell commands, databases, network calls, package registries and other external side effects are audited but not automatically reversible.
-- A `both` rewind spans two durable domains. If code restore completes and the event-store fork fails, MiniClaude records `code_restore_completed=true` and the restore ID, but cannot pretend the combined action was atomic.
+- A `both` rewind spans two durable domains. If code restore completes and the event-store fork fails, UndoMesh records `code_restore_completed=true` and the restore ID, but cannot pretend the combined action was atomic.
 - The same-machine fallback key is an availability convenience, not enterprise key management. Key rotation, escrow and hardware-backed storage remain future work.
 - Python Gear chunking and zlib prioritize portability over multi-gigabyte throughput.
 - Tkinter provides a dependency-light client, but lacks a production desktop shell's accessibility, virtualization, auto-update and native diff/editor capabilities.

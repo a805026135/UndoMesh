@@ -7,13 +7,13 @@ import asyncio
 
 import pytest
 
-from miniclaude.context.manager import ContextManager
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.execution.capabilities import CapabilitySet, ToolExecutionContext
-from miniclaude.security.auditor import SecurityAuditor
-from miniclaude.security.permission import PermissionManager
-from miniclaude.tools.base import BaseTool
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.context.manager import ContextManager
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.execution.capabilities import CapabilitySet, ToolExecutionContext
+from undomesh.security.auditor import SecurityAuditor
+from undomesh.security.permission import PermissionManager
+from undomesh.tools.base import BaseTool
+from undomesh.tools.registry import ToolRegistry
 
 
 class RecordingTool(BaseTool):

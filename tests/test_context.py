@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from miniclaude.context.budget import TokenBudget
-from miniclaude.context.externalizer import Externalizer
-from miniclaude.context.compressor import ContextCompressor
-from miniclaude.tools.base import ToolResult
+from undomesh.context.budget import TokenBudget
+from undomesh.context.externalizer import Externalizer
+from undomesh.context.compressor import ContextCompressor
+from undomesh.tools.base import ToolResult
 
 
 class TestTokenBudget:

@@ -4,7 +4,7 @@ Stage 18 derives one checkpoint from every immutable `TURN_STARTED` event. Check
 
 ## Checkpoint health
 
-For each prompt boundary, MiniClaude computes the newest-to-oldest transaction closure after that event and previews one compensating restore. Live file hashing is cached per path during a checkpoint listing, avoiding repeated multi-gigabyte reads when many prompts touch the same file.
+For each prompt boundary, UndoMesh computes the newest-to-oldest transaction closure after that event and previews one compensating restore. Live file hashing is cached per path during a checkpoint listing, avoiding repeated multi-gigabyte reads when many prompts touch the same file.
 
 The UI reports:
 
@@ -46,9 +46,9 @@ REPL commands:
 Non-interactive CLI:
 
 ```text
-miniclaude --checkpoints
-miniclaude --rewind latest --rewind-mode conversation
-miniclaude --rewind <id> --rewind-mode both --yes
+undomesh --checkpoints
+undomesh --rewind latest --rewind-mode conversation
+undomesh --rewind <id> --rewind-mode both --yes
 ```
 
 Code/both tool rewinds require a fresh, non-cached confirmation. Non-interactive code rewind fails unless `--yes` is present. The desktop Recovery Center displays prompt health, transaction counts, conflicts, unavailable dependencies and recent restore receipts before offering all four actions.
@@ -57,4 +57,4 @@ Code/both tool rewinds require a fresh, non-cached confirmation. Non-interactive
 
 ## Comparison boundary
 
-The implementation follows the publicly documented checkpoint idea but is not a clone of private Claude Code or Codex internals. MiniClaude's differentiator is the explicit transaction closure, backup health, lease and compensating restore receipt. See `docs/CLAUDE_REWIND_COMPARISON.md` for source boundaries.
+The implementation follows the publicly documented checkpoint idea but is not a clone of private Claude Code or Codex internals. UndoMesh's differentiator is the explicit transaction closure, backup health, lease and compensating restore receipt. See `docs/CLAUDE_REWIND_COMPARISON.md` for source boundaries.

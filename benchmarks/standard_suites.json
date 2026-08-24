@@ -15,7 +15,7 @@
       "requires": ["Terminal-Bench CLI", "container runtime", "provider key"]
     },
     {
-      "name": "miniclaude-recovery-security",
+      "name": "undomesh-recovery-security",
       "adapter": "python scripts/run_offline_benchmarks.py",
       "dataset_revision": "repository commit",
       "requires": []

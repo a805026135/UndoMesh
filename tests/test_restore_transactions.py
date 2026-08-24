@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import pytest
 
-from miniclaude.execution.patches import PatchSet, PatchValidationError
-from miniclaude.execution.recovery import RestoreConflictError, RestoreState
-from miniclaude.execution.transactions import DurableChangeEngine, RetentionPolicy
+from undomesh.execution.patches import PatchSet, PatchValidationError
+from undomesh.execution.recovery import RestoreConflictError, RestoreState
+from undomesh.execution.transactions import DurableChangeEngine, RetentionPolicy
 
 
 def _repo(path: Path) -> None:

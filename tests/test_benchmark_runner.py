@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-from miniclaude.evaluation.runner import BenchmarkRunner, BenchmarkTask
+from undomesh.evaluation.runner import BenchmarkRunner, BenchmarkTask
 
 
 def test_benchmark_runner_records_pass_and_failure(tmp_path: Path) -> None:

@@ -10,9 +10,9 @@ The documented boundary is important: Write, Edit and NotebookEdit are tracked; 
 
 Sources: [Claude Code checkpointing](https://code.claude.com/docs/en/checkpointing), [Agent SDK file checkpointing](https://code.claude.com/docs/en/agent-sdk/file-checkpointing), [session storage and retention](https://code.claude.com/docs/en/sessions), [prompt-cache behavior during rewind](https://code.claude.com/docs/en/prompt-caching).
 
-## MiniClaude mapping
+## UndoMesh mapping
 
-MiniClaude already has stronger file-level primitives in several areas:
+UndoMesh already has stronger file-level primitives in several areas:
 
 - every default mutation uses a declared ChangeSet instead of direct edit tools;
 - pre/postimages cover creation, deletion and rename;
@@ -24,7 +24,7 @@ MiniClaude already has stronger file-level primitives in several areas:
 
 The next rewind layer should use `TURN_STARTED` as the prompt checkpoint and collect later `TOOL_COMPLETED.transaction_id` values. “Restore code” rolls those transactions back in reverse order. “Restore conversation” appends a projection marker or creates a fork rather than deleting append-only events. “Restore both” combines those operations only after a complete conflict preflight. “Summarize” remains an event projection operation and does not mutate files.
 
-This preserves the useful Claude UX while improving its documented Bash/external-change boundary: MiniClaude refuses default direct-write/Shell bypasses and stops rewind on unknown newer content. It should still describe checkpoints as local recovery, not version control.
+This preserves the useful Claude UX while improving its documented Bash/external-change boundary: UndoMesh refuses default direct-write/Shell bypasses and stops rewind on unknown newer content. It should still describe checkpoints as local recovery, not version control.
 
 ## Required next-stage invariants
 

@@ -5,11 +5,11 @@ import json
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from miniclaude.distribution.updates import UpdateVerifier, redact_crash_report
-from miniclaude.evaluation.standard import wilson_interval
-from miniclaude.execution.code_mode import ControlledToolProgram
-from miniclaude.plugins.manifest import PluginManifest
-from miniclaude.server.rpc import JSONRPCDispatcher
+from undomesh.distribution.updates import UpdateVerifier, redact_crash_report
+from undomesh.evaluation.standard import wilson_interval
+from undomesh.execution.code_mode import ControlledToolProgram
+from undomesh.plugins.manifest import PluginManifest
+from undomesh.server.rpc import JSONRPCDispatcher
 
 
 def test_plugin_manifest_rejects_escape_and_accepts_composition():

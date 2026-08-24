@@ -1,6 +1,6 @@
 import pytest
 
-from miniclaude.mcp.client import MCPClient
+from undomesh.mcp.client import MCPClient
 
 
 class FakeTransport:

@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import pytest
 
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.execution.capabilities import CapabilitySet, ToolExecutionContext
-from miniclaude.provenance.models import Provenance, SourceType, TrustLevel
-from miniclaude.provenance.policy import PolicyAction, ProvenancePolicy, SinkType
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.store import SQLiteEventStore
-from miniclaude.security.permission import PermissionManager
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.execution.capabilities import CapabilitySet, ToolExecutionContext
+from undomesh.provenance.models import Provenance, SourceType, TrustLevel
+from undomesh.provenance.policy import PolicyAction, ProvenancePolicy, SinkType
+from undomesh.runtime.events import EventType
+from undomesh.runtime.store import SQLiteEventStore
+from undomesh.security.permission import PermissionManager
+from undomesh.tools.registry import ToolRegistry
 from test_execution_pipeline import RecordingTool
-from miniclaude.tools.file_tools import ReadFileTool
-from miniclaude.core.context import ConversationContext
-from miniclaude.core.loop import QueryLoop
-from miniclaude.llm.client import LLMResponse
+from undomesh.tools.file_tools import ReadFileTool
+from undomesh.core.context import ConversationContext
+from undomesh.core.loop import QueryLoop
+from undomesh.llm.client import LLMResponse
 from conftest import ScriptedLLMClient
 
 

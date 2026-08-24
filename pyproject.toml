@@ -3,13 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "miniclaude"
+name = "undomesh"
 version = "0.1.0"
 description = "A replayable multi-provider coding agent with durable recovery and prompt rewind"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
-    { name = "MiniClaude Team" },
+    { name = "UndoMesh Team" },
 ]
 keywords = ["ai", "agent", "coding", "harness", "recovery", "tool-use"]
 
@@ -49,13 +49,13 @@ dev = [
 ]
 
 [project.scripts]
-miniclaude = "miniclaude.__main__:main"
-miniclaude-desktop = "miniclaude.ui.desktop:launch_desktop"
-miniclaude-server = "miniclaude.__main__:main"
+undomesh = "undomesh.__main__:main"
+undomesh-desktop = "undomesh.ui.desktop:launch_desktop"
+undomesh-server = "undomesh.__main__:main"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["miniclaude"]
+packages = ["undomesh"]

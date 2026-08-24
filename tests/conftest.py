@@ -1,4 +1,4 @@
-"""Shared test fixtures for MiniClaude tests."""
+"""Shared test fixtures for UndoMesh tests."""
 
 from __future__ import annotations
 
@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from miniclaude.core.config import MiniClaudeConfig, reset_config
-from miniclaude.llm.client import LLMResponse
+from undomesh.core.config import UndoMeshConfig, reset_config
+from undomesh.llm.client import LLMResponse
 
 
 class ScriptedLLMClient:
@@ -56,14 +56,14 @@ def tmp_project(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def config(tmp_project: Path, monkeypatch: pytest.MonkeyPatch) -> MiniClaudeConfig:
+def config(tmp_project: Path, monkeypatch: pytest.MonkeyPatch) -> UndoMeshConfig:
     """Create a test configuration."""
-    monkeypatch.setenv("MINICLAUDE_API_KEY", "test-key-for-testing")
-    monkeypatch.setenv("MINICLAUDE_PROJECT_DIR", str(tmp_project))
-    monkeypatch.setenv("MINICLAUDE_MEMORY_ENABLED", "false")
-    monkeypatch.setenv("MINICLAUDE_ALLOW_SHELL", "true")
+    monkeypatch.setenv("UNDOMESH_API_KEY", "test-key-for-testing")
+    monkeypatch.setenv("UNDOMESH_PROJECT_DIR", str(tmp_project))
+    monkeypatch.setenv("UNDOMESH_MEMORY_ENABLED", "false")
+    monkeypatch.setenv("UNDOMESH_ALLOW_SHELL", "true")
     reset_config()
-    cfg = MiniClaudeConfig()
+    cfg = UndoMeshConfig()
     yield cfg
     reset_config()
 

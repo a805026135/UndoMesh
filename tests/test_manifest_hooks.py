@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from miniclaude.runtime.declarative_hooks import DeclarativeHookLoader
-from miniclaude.runtime.hooks import HookBus, HookContext, HookPoint, HookVerdict
-from miniclaude.security.manifest import LocalKeyRing, ManifestAuthenticator
+from undomesh.runtime.declarative_hooks import DeclarativeHookLoader
+from undomesh.runtime.hooks import HookBus, HookContext, HookPoint, HookVerdict
+from undomesh.security.manifest import LocalKeyRing, ManifestAuthenticator
 
 
 def test_manifest_authentication_rotation_and_old_key_readability(tmp_path):

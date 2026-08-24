@@ -7,17 +7,17 @@ from pathlib import Path
 
 import pytest
 
-import miniclaude
-import miniclaude.core.loop as loop_module
-from miniclaude.core.context import ConversationContext
-from miniclaude.core.loop import QueryLoop
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.llm.client import LLMResponse
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.invariants import validate_lifecycle
-from miniclaude.runtime.store import InMemoryEventStore
-from miniclaude.tools.base import BaseTool, ToolResult
-from miniclaude.tools.registry import ToolRegistry
+import undomesh
+import undomesh.core.loop as loop_module
+from undomesh.core.context import ConversationContext
+from undomesh.core.loop import QueryLoop
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.llm.client import LLMResponse
+from undomesh.runtime.events import EventType
+from undomesh.runtime.invariants import validate_lifecycle
+from undomesh.runtime.store import InMemoryEventStore
+from undomesh.tools.base import BaseTool, ToolResult
+from undomesh.tools.registry import ToolRegistry
 from conftest import ScriptedLLMClient
 
 
@@ -63,7 +63,7 @@ def event_types(query_loop: QueryLoop) -> list[EventType]:
 
 def test_tests_import_current_checkout():
     repository = Path(__file__).resolve().parents[1]
-    imported = Path(miniclaude.__file__).resolve()
+    imported = Path(undomesh.__file__).resolve()
     assert imported.is_relative_to(repository)
 
 

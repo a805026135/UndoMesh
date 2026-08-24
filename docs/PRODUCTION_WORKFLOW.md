@@ -4,13 +4,13 @@ Stages 10–12 harden the boundary around model-driven execution without claimin
 
 Shell subprocesses receive a small environment allowlist; API keys, tokens, passwords, credentials and auth variables are removed. `detect_sandbox()` reports whether only process-group controls are active or an OS backend is available. The current Windows default does not isolate filesystem or network at kernel level.
 
-Provider secrets remain memory-only by default. Installing `miniclaude[credentials]` enables the `KeyringCredentialStore` adapter for an OS-supported credential backend; provider JSON still contains no secret.
+Provider secrets remain memory-only by default. Installing `undomesh[credentials]` enables the `KeyringCredentialStore` adapter for an OS-supported credential backend; provider JSON still contains no secret.
 
 Agent-produced unified diffs should enter through `PatchSet.parse()` and `GitPatchWorkflow`. Paths are validated before `git apply --check`; accepted patches carry a content hash and verification evidence. Verification commands run without a shell and reject pipes, redirects and chaining operators.
 
 `apply_patch_set` exposes this workflow to the Agent through the normal ToolExecutor. Direct write/edit/shell tools are not registered in the default transactional mode. Each proposal is copied to an isolated staging workspace, verified there, and committed only if every live target still matches its prepared preimage.
 
-Preimages and postimages are content-addressed SHA-256 blobs under `.miniclaude/transactions`; an atomically replaced journal records every state transition. The commit lock closes the conflict-check/write race between MiniClaude processes. If a process stops after entering `committing`, startup recovery restores all preimages. `rollback_change_set` restores a committed transaction only when doing so cannot overwrite newer edits, while `change_transaction_status` returns its receipt and transition history. File creation, deletion and rename are included.
+Preimages and postimages are content-addressed SHA-256 blobs under `.undomesh/transactions`; an atomically replaced journal records every state transition. The commit lock closes the conflict-check/write race between UndoMesh processes. If a process stops after entering `committing`, startup recovery restores all preimages. `rollback_change_set` restores a committed transaction only when doing so cannot overwrite newer edits, while `change_transaction_status` returns its receipt and transition history. File creation, deletion and rename are included.
 
 This is a crash-recoverable file transaction rather than a globally atomic filesystem transaction: readers can observe a partial multi-file commit before recovery, and external side effects are outside its scope. Verification code is credential-scrubbed and staging-isolated but is not yet placed in a kernel network/filesystem sandbox. ACLs, extended attributes and hard-link identity are not preserved. See `docs/DURABLE_CHANGE_TRANSACTIONS.md`.
 

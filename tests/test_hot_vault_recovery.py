@@ -6,16 +6,16 @@ import subprocess
 
 import pytest
 
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.execution.backup_store import EncryptedChunkStore
-from miniclaude.execution.transactions import (
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.execution.backup_store import EncryptedChunkStore
+from undomesh.execution.transactions import (
     DurableChangeEngine,
     HotVaultPolicy,
     TransactionConflictError,
 )
-from miniclaude.execution.patches import PatchValidationError
-from miniclaude.security.permission import PermissionManager
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.execution.patches import PatchValidationError
+from undomesh.security.permission import PermissionManager
+from undomesh.tools.registry import ToolRegistry
 
 
 def _repo(path: Path) -> None:

@@ -4,9 +4,9 @@ from types import SimpleNamespace
 
 from typer.testing import CliRunner
 
-from miniclaude.__main__ import app
-from miniclaude.execution.recovery import RestoreState
-from miniclaude.ui.viewmodels import checkpoint_detail, checkpoint_row, restore_history
+from undomesh.__main__ import app
+from undomesh.execution.recovery import RestoreState
+from undomesh.ui.viewmodels import checkpoint_detail, checkpoint_row, restore_history
 
 
 def test_cli_help_exposes_checkpoint_and_desktop_surfaces() -> None:

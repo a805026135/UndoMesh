@@ -1,6 +1,6 @@
 # Transaction Backup Retention and Garbage Collection
 
-Durable rollback data has a bounded lifecycle. Removing a file from the workspace is not physical erasure while a protected transaction still references its preimage; this is necessary for rollback. MiniClaude separates the small audit receipt from the potentially large content-addressed blobs.
+Durable rollback data has a bounded lifecycle. Removing a file from the workspace is not physical erasure while a protected transaction still references its preimage; this is necessary for rollback. UndoMesh separates the small audit receipt from the potentially large content-addressed blobs.
 
 ## Default lifecycle
 
@@ -43,17 +43,17 @@ The default hard budget is 2 GiB across compressed/encrypted chunks, manifests, 
 Configuration:
 
 ```text
-MINICLAUDE_TRANSACTION_COMMITTED_RETENTION_DAYS=30
-MINICLAUDE_TRANSACTION_TERMINAL_RETENTION_DAYS=7
-MINICLAUDE_TRANSACTION_TRASH_GRACE_DAYS=1
-MINICLAUDE_TRANSACTION_ORPHAN_GRACE_HOURS=1
-MINICLAUDE_TRANSACTION_MAX_BACKUP_BYTES=2147483648
-MINICLAUDE_TRANSACTION_AUTO_PRUNE=true
-MINICLAUDE_TRANSACTION_PRUNE_INTERVAL_HOURS=6
-MINICLAUDE_TRANSACTION_BACKUP_ENCRYPTION=true
-MINICLAUDE_TRANSACTION_CHUNK_MIN_BYTES=16384
-MINICLAUDE_TRANSACTION_CHUNK_AVG_BYTES=65536
-MINICLAUDE_TRANSACTION_CHUNK_MAX_BYTES=262144
+UNDOMESH_TRANSACTION_COMMITTED_RETENTION_DAYS=30
+UNDOMESH_TRANSACTION_TERMINAL_RETENTION_DAYS=7
+UNDOMESH_TRANSACTION_TRASH_GRACE_DAYS=1
+UNDOMESH_TRANSACTION_ORPHAN_GRACE_HOURS=1
+UNDOMESH_TRANSACTION_MAX_BACKUP_BYTES=2147483648
+UNDOMESH_TRANSACTION_AUTO_PRUNE=true
+UNDOMESH_TRANSACTION_PRUNE_INTERVAL_HOURS=6
+UNDOMESH_TRANSACTION_BACKUP_ENCRYPTION=true
+UNDOMESH_TRANSACTION_CHUNK_MIN_BYTES=16384
+UNDOMESH_TRANSACTION_CHUNK_AVG_BYTES=65536
+UNDOMESH_TRANSACTION_CHUNK_MAX_BYTES=262144
 ```
 
 ## Security and deletion boundary

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from miniclaude.skills.base import BaseSkill, SkillContext, SkillMeta, SkillResult
-from miniclaude.skills.catalog import SkillCatalog
-from miniclaude.skills.evolution import EvaluationOutcome, SkillVersionStore
-from miniclaude.skills.router import SkillRouter
+from undomesh.skills.base import BaseSkill, SkillContext, SkillMeta, SkillResult
+from undomesh.skills.catalog import SkillCatalog
+from undomesh.skills.evolution import EvaluationOutcome, SkillVersionStore
+from undomesh.skills.router import SkillRouter
 
 
 class DemoSkill(BaseSkill):

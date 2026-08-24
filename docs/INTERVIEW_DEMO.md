@@ -1,4 +1,4 @@
-# MiniClaude 面试现场演示手册
+# UndoMesh 面试现场演示手册
 
 ## 一条命令
 
@@ -31,9 +31,9 @@ Agent 将 `zero` 改为 `agent` 后，模拟用户继续编辑为 `newer-user-co
 ## 建议现场顺序
 
 1. 先运行脚本，让面试官看到三段 JSON 均成功。
-2. 打开 `miniclaude/execution/recovery.py` 讲完整预检、Lease 和补偿。
-3. 打开 `miniclaude/runtime/jobs.py` 讲为什么重启后标记 `interrupted` 而不是自动重跑。
-4. 打开 `miniclaude/execution/worktrees.py` 讲候选验证与 Diff 摘要审批。
+2. 打开 `undomesh/execution/recovery.py` 讲完整预检、Lease 和补偿。
+3. 打开 `undomesh/runtime/jobs.py` 讲为什么重启后标记 `interrupted` 而不是自动重跑。
+4. 打开 `undomesh/execution/worktrees.py` 讲候选验证与 Diff 摘要审批。
 5. 最后主动说明边界：外部副作用不普遍可逆、多文件提交不是文件系统全局原子、标准 Benchmark 尚未实跑。
 
 ## 高频追问

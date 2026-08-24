@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from miniclaude.evaluation.standard import wilson_interval
+from undomesh.evaluation.standard import wilson_interval
 
 
 def main() -> None:

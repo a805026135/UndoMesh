@@ -4,19 +4,19 @@ from pathlib import Path
 
 import pytest
 
-from miniclaude.core.tool_executor import ToolExecutor
-from miniclaude.execution.capabilities import CapabilitySet, ToolExecutionContext
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.hooks import (
+from undomesh.core.tool_executor import ToolExecutor
+from undomesh.execution.capabilities import CapabilitySet, ToolExecutionContext
+from undomesh.runtime.events import EventType
+from undomesh.runtime.hooks import (
     HookBus,
     HookContext,
     HookOutcome,
     HookPoint,
     HookVerdict,
 )
-from miniclaude.runtime.store import InMemoryEventStore
-from miniclaude.tools.base import BaseTool
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.runtime.store import InMemoryEventStore
+from undomesh.tools.base import BaseTool
+from undomesh.tools.registry import ToolRegistry
 
 
 class TouchTool(BaseTool):

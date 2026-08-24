@@ -7,11 +7,11 @@ import sqlite3
 
 import pytest
 
-from miniclaude.llm.client import LLMResponse
-from miniclaude.runtime.artifacts import ArtifactIntegrityError, ArtifactStore
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.replay import ReplayEngine, ReplayMode
-from miniclaude.runtime.store import SQLiteEventStore
+from undomesh.llm.client import LLMResponse
+from undomesh.runtime.artifacts import ArtifactIntegrityError, ArtifactStore
+from undomesh.runtime.events import EventType
+from undomesh.runtime.replay import ReplayEngine, ReplayMode
+from undomesh.runtime.store import SQLiteEventStore
 from test_query_loop_integration import make_loop
 
 

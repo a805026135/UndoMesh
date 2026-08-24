@@ -2,9 +2,9 @@ import json
 
 import pytest
 
-from miniclaude.plugins.manager import PluginManager
-from miniclaude.runtime.hooks import HookBus
-from miniclaude.tools.registry import ToolRegistry
+from undomesh.plugins.manager import PluginManager
+from undomesh.runtime.hooks import HookBus
+from undomesh.tools.registry import ToolRegistry
 
 
 class FakeTransport:

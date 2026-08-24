@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from miniclaude.security.rules import SecurityRules, PathBoundaryRule, DangerousCommandRule
-from miniclaude.security.prompt_guard import PromptGuard
+from undomesh.security.rules import SecurityRules, PathBoundaryRule, DangerousCommandRule
+from undomesh.security.prompt_guard import PromptGuard
 
 
 class TestSecurityRules:

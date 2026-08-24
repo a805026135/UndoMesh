@@ -8,11 +8,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from miniclaude.provenance.models import Provenance, SourceType, TrustLevel
-from miniclaude.provenance.policy import ProvenancePolicy
-from miniclaude.runtime.events import EventType
-from miniclaude.runtime.replay import ReplayEngine
-from miniclaude.runtime.store import SQLiteEventStore
+from undomesh.provenance.models import Provenance, SourceType, TrustLevel
+from undomesh.provenance.policy import ProvenancePolicy
+from undomesh.runtime.events import EventType
+from undomesh.runtime.replay import ReplayEngine
+from undomesh.runtime.store import SQLiteEventStore
 
 
 def main() -> None:
