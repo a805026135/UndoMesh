@@ -16,6 +16,10 @@
   <img src="docs/screenshot_desktop.png" width="560" alt="Desktop GUI">
 </p>
 
+<p align="center">
+  <img src="docs/screenshot_causal_rollback.png" width="880" alt="Multi-Agent Causal Rollback Review">
+</p>
+
 ---
 
 ## 项目材料
@@ -28,6 +32,7 @@
 - [项目指令、Hook 与沙箱](docs/PROJECT_INSTRUCTIONS_AND_HOOKS.md)：Stage 19 控制面语义与安全边界
 - [阶段 19–21 实现与边界](docs/STAGES_19_21_IMPLEMENTATION.md)：App Server、MCP、Worktree、SDK、评测与分发
 - [面试现场演示](docs/INTERVIEW_DEMO.md)：无需 Key 的恢复、冲突拒绝与 Worktree 摘要合并闭环
+- [多 Agent 因果回退](docs/CAUSAL_MULTI_AGENT_ROLLBACK.md)：依赖闭包、逆拓扑补偿、重放和双摘要审批
 
 ---
 
@@ -254,6 +259,20 @@ len(content) > 2000 ?
 - 每个子任务声明依赖、读写集合、预期产物、验证命令、token 预算和 deadline
 - 无冲突任务可并行，重叠写集合自动串行；写任务可运行在隔离副本
 - 父任务取消会通过结构化并发传播到运行中的子任务
+
+#### 因果回退：撤销错误，也撤销它造成的影响
+
+只回退一个 Agent 的文件可能留下依赖其输出的后代任务。MiniClaude 将显式依赖与读写集重叠写入 SQLite 因果账本，并把 Task/Agent/Worktree 身份传播到 Change Journal。指定任务回退时先计算传递影响闭包，再在独立 Git Worktree 中逆拓扑撤销；也可选择撤销根任务后重放仍能应用的后代，任何冲突都在主工作区写入前终止。
+
+人工审批同时绑定 `plan_sha256` 与 `review_sha256`。后者覆盖父 HEAD、候选 Commit、完整 Tree Hash、Binary Diff 和验证结果；审批后只要仓库或候选发生漂移，就拒绝合并。这把“多 Agent 调度 → 变更归因 → 影响分析 → 隔离补偿/重放 → 验证 → 审批 → 确定性合并”连成一个可审计闭环。
+
+```powershell
+# 无需模型 Key：运行真实双 Agent Commit 的因果回退演示
+python scripts/demo_causal_rollback.py
+python scripts/demo_causal_rollback.py --ui
+```
+
+设计、不变量和失败边界见 [多 Agent 因果回退](docs/CAUSAL_MULTI_AGENT_ROLLBACK.md)。
 
 ---
 

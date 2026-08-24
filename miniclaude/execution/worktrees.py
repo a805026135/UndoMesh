@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 from pathlib import Path
 import subprocess
 from uuid import uuid4
@@ -25,6 +26,9 @@ class CandidateReviewReceipt:
     verification_argv: tuple[str, ...]
     verification_exit_code: int
     candidate_commit: str
+    parent_head: str
+    candidate_tree: str
+    review_sha256: str
 
 
 class GitWorktreeManager:
@@ -60,6 +64,21 @@ class GitWorktreeManager:
         self._git("merge", "--no-ff", "--no-edit", receipt.branch)
         return self._git("rev-parse", "HEAD").strip()
 
+    def head(self) -> str:
+        return self._git("rev-parse", "HEAD").strip()
+
+    def tree(self, commit: str) -> str:
+        return self._git("rev-parse", f"{commit}^{{tree}}").strip()
+
+    def branch_head(self, receipt: WorktreeReceipt) -> str:
+        return self._git("-C", str(receipt.path), "rev-parse", "HEAD").strip()
+
+    def revert_no_commit(self, receipt: WorktreeReceipt, commit: str) -> None:
+        self._git("-C", str(receipt.path), "revert", "--no-commit", "-m", "1", commit)
+
+    def cherry_pick_no_commit(self, receipt: WorktreeReceipt, commit: str) -> None:
+        self._git("-C", str(receipt.path), "cherry-pick", "--no-commit", commit)
+
     def remove(self, receipt: WorktreeReceipt, *, discard_changes: bool = False) -> None:
         args = ["worktree", "remove"]
         if discard_changes:
@@ -89,6 +108,9 @@ class WorktreeReviewWorkflow:
         verification_argv: list[str],
         commit_message: str,
     ) -> CandidateReviewReceipt:
+        parent_head = self.manager.head()
+        if parent_head != worktree.baseline:
+            raise RuntimeError("parent HEAD changed; recreate or rebase the candidate before review")
         verification = self.manager.verify(worktree, verification_argv)
         if verification.returncode:
             raise RuntimeError(
@@ -97,19 +119,49 @@ class WorktreeReviewWorkflow:
             )
         candidate_commit = self.manager.commit_candidate(worktree, commit_message)
         diff = self.manager.diff(worktree)
+        candidate_tree = self.manager.tree(candidate_commit)
         paths = tuple(
             line[6:] for line in diff.splitlines() if line.startswith("+++ b/")
         )
+        review_payload = {
+            "baseline": worktree.baseline,
+            "parent_head": parent_head,
+            "candidate_commit": candidate_commit,
+            "candidate_tree": candidate_tree,
+            "diff_sha256": hashlib.sha256(diff.encode()).hexdigest(),
+            "verification_argv": list(verification_argv),
+            "verification_exit_code": verification.returncode,
+        }
+        review_sha256 = hashlib.sha256(
+            json.dumps(review_payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
         return CandidateReviewReceipt(
             worktree, hashlib.sha256(diff.encode()).hexdigest(),
             tuple(dict.fromkeys(paths)), tuple(verification_argv),
-            verification.returncode, candidate_commit,
+            verification.returncode, candidate_commit, parent_head,
+            candidate_tree, review_sha256,
         )
 
-    def approve_and_merge(self, review: CandidateReviewReceipt, *, approved_diff_sha256: str) -> str:
-        if approved_diff_sha256 != review.diff_sha256:
-            raise PermissionError("approved review digest does not match candidate")
+    def approve_and_merge(
+        self,
+        review: CandidateReviewReceipt,
+        *,
+        approved_review_sha256: str,
+    ) -> str:
+        if approved_review_sha256 != review.review_sha256:
+            raise PermissionError("approved review envelope does not match candidate")
+        if self.manager.head() != review.parent_head:
+            raise RuntimeError("parent HEAD changed after review")
+        if review.parent_head != review.worktree.baseline:
+            raise RuntimeError("review baseline no longer matches the approved parent")
+        if self.manager.branch_head(review.worktree) != review.candidate_commit:
+            raise RuntimeError("candidate commit changed after review")
+        if self.manager.tree(review.candidate_commit) != review.candidate_tree:
+            raise RuntimeError("candidate tree changed after review")
         current = self.manager.diff(review.worktree)
         if hashlib.sha256(current.encode()).hexdigest() != review.diff_sha256:
             raise RuntimeError("candidate changed after review")
-        return self.manager.merge(review.worktree)
+        merged = self.manager.merge(review.worktree)
+        if self.manager.tree(merged) != review.candidate_tree:
+            raise RuntimeError("merged tree differs from the approved candidate tree")
+        return merged

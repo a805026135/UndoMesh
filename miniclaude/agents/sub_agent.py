@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+import json
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -216,12 +217,33 @@ class SubAgent:
             self._messages.append(assistant_msg)
 
             # Execute and add results
+            causal_metadata: dict[str, str] = {}
+            if context:
+                for key in ("task_id", "parent_task_id", "worktree_id", "baseline"):
+                    value = context.get(key)
+                    if value:
+                        causal_metadata[key] = str(value)
+                for source_key, target_key in (
+                    ("readable_paths", "declared_read_paths"),
+                    ("writable_paths", "declared_write_paths"),
+                    ("dependencies", "dependency_task_ids"),
+                ):
+                    values = context.get(source_key)
+                    if values is not None:
+                        causal_metadata[target_key] = json.dumps(list(values), ensure_ascii=False)
+            agent_identity = (
+                f"agent:{self.agent_type}:{causal_metadata['task_id']}"
+                if causal_metadata.get("task_id")
+                else self.name
+            )
             tool_results = await executor.execute_all(
                 response.tool_calls,
                 ToolExecutionContext(
-                    agent_id=self.name,
+                    session_id=str(context.get("session_id", "unknown")) if context else "unknown",
+                    agent_id=agent_identity,
                     user_input=task,
                     capability_set=capabilities,
+                    metadata=causal_metadata,
                 ),
             )
             result_msg = MessageBuilder.tool_results_to_message(

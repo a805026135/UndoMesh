@@ -11,8 +11,8 @@
 - **恢复优先的变更事务：** 将写文件和删除统一收敛到带 pre/post hash 的 Change Journal；实现 2 GiB Warm Store 与 24 小时超大文件 Hot Vault，采用内容定义分块、跨版本去重、条件压缩和 AES-256-GCM，恢复前完成依赖租约、全量物化、冲突复核及完整哈希验证。
 - **Prompt Checkpoint 与安全 Rewind：** 每个用户 Prompt 派生恢复点，支持仅代码、仅会话、代码+会话和摘要四种模式；恢复作为独立补偿事务执行，原变更和会话历史保持可审计，崩溃时自动补偿，未知现场内容拒绝覆盖。
 - **统一安全控制面：** ToolExecutor 集中执行 Capability、规范路径、deny-first 权限、危险命令审批、Prompt Injection 来源追踪和 source-to-sink 策略；API Key 仅驻留进程，不进入普通配置、事件或审计日志，永久清理热备必须绑定精确范围并逐次人工确认。
-- **Skill 与受控多 Agent：** Skill 使用二阶段召回、边界元信息和评估证据控制路由与版本晋升；子 Agent 通过 TaskContract 声明依赖、读写集、Token/Deadline 和验收命令，冲突写集串行、无冲突任务并行，父 Agent 统一验收。
-- **确定性扩展与产品质量：** 将 Restore/Rewind/Audit 纳入持久单写者任务队列；打通受信 Plugin→声明式 Hook/MCP→显式 Capability，以及 Worktree→验证→Diff 摘要审批→确定性合并链路；提供 SDK/JSON-RPC、CLI 与桌面 Recovery/Review Center，建立 201 项离线测试、18/18 固定 Benchmark 和一键无 Key 面试 Demo。
+- **多 Agent 因果回退：** 记录子任务显式依赖、读写集和变更事务，回退时计算传递影响闭包，在隔离 Git Worktree 中逆拓扑补偿，或撤销根任务后重放仍成立的后代；审批绑定 Plan、父 HEAD、候选 Commit、完整 Tree Hash、Binary Diff 与验证结果，状态漂移即拒绝合并。
+- **完整产品链路：** Skill 使用二阶段召回与证据门控晋升；Restore/Rewind/Audit 进入持久单写者任务队列，并提供 MCP、Plugin/Hook 信任链、SDK/JSON-RPC、CLI、桌面 Recovery/Review Center 和无需 Key 的纵向演示。
 
 ## 一页简历压缩版
 
@@ -20,12 +20,12 @@
 
 - 基于 append-only 事件流实现 Query Loop、Replay/Fork、上下文压缩和 Tool Call/Result 配对保护，统一多模型 Provider 与受控工具执行。
 - 设计恢复优先的 Change/Restore 双事务：内容定义分块、压缩去重、AES-GCM、2 GiB Warm Store、24 小时大文件 Hot Vault、恢复租约、冲突检测和崩溃补偿。
-- 实现四模式 Prompt Rewind、Provenance source-to-sink 权限控制、证据门控 Skill 演进及读写集约束的多 Agent 调度。
-- 提供 CLI 与桌面 Recovery/Review Center、分层项目指令、Lifecycle Hook、MCP 与 SDK；201 项离线测试、18/18 固定 Benchmark，并提供无需 Key 的恢复/冲突/Worktree 纵向 Demo。
+- 实现四模式 Prompt Rewind、Provenance source-to-sink 权限控制、证据门控 Skill 演进，以及基于依赖闭包和 Git Worktree 的多 Agent 因果回退。
+- 提供 CLI 与桌面 Recovery/Review Center、分层项目指令、Lifecycle Hook、MCP、Plugin、SDK/JSON-RPC 及无需 Key 的恢复演示。
 
 ## 30 秒口述版
 
-我做了一个轻量 AI Coding Agent Harness。它不是简单套一层模型 API，而是把 Query Loop、工具执行、上下文、权限、多 Agent 和文件恢复做成统一运行时。核心是恢复优先：删除前完成分层加密备份，回退本身是带租约、全量预检、哈希验证和崩溃补偿的独立事务；恢复又进入持久后台队列，未知用户内容会拒绝覆盖。多 Agent 候选在真实 Worktree 中验证，并用 Diff 摘要绑定人工审批与最终合并。目前 201 项测试及 18 套固定离线基准通过，可用一条无 Key 命令现场演示。
+我做了一个恢复优先的轻量 AI Coding Agent Harness，把 Query Loop、工具执行、上下文、权限、多 Agent 和文件恢复做成统一运行时。删除前进入分层加密备份，恢复以独立补偿事务执行，未知用户内容拒绝覆盖。进一步解决多 Agent 的逻辑一致性：系统记录任务依赖和读写集，回退错误任务时计算影响闭包，在真实 Git Worktree 中逆拓扑撤销或重放后代，再用 Plan、父 HEAD、Commit、Tree 和验证结果绑定人工审批。整条链路可用无 Key 演示现场复现。
 
 ## 简历使用边界
 

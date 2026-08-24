@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 import time
 import asyncio
+import json
 from dataclasses import dataclass, field
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from miniclaude.tools.base import BaseTool, ToolResult
@@ -18,6 +20,7 @@ from miniclaude.security.permission import PermissionManager
 from miniclaude.provenance.policy import PolicyAction, ProvenancePolicy
 from miniclaude.execution.validation import validate_tool_input
 from miniclaude.runtime.hooks import HookBus, HookContext, HookPoint, HookVerdict
+from miniclaude.execution.context import bind_tool_execution_context
 
 logger = logging.getLogger(__name__)
 
@@ -155,7 +158,7 @@ class ToolExecutor:
         if name == "run_command" and not capabilities.shell_enabled:
             return self._denied(name, params, "Shell execution is not granted")
 
-        path_error = self._validate_paths(name, params, capabilities)
+        path_error = self._validate_paths(name, params, capabilities, context)
         if path_error:
             return self._denied(name, params, path_error)
 
@@ -217,10 +220,11 @@ class ToolExecutor:
 
         try:
             logger.info("Executing tool: %s(%s)", name, _format_params(params))
-            result = await asyncio.wait_for(
-                tool.execute(**params),
-                timeout=self.config.tool_timeout_seconds,
-            )
+            with bind_tool_execution_context(context):
+                result = await asyncio.wait_for(
+                    tool.execute(**params),
+                    timeout=self.config.tool_timeout_seconds,
+                )
 
             elapsed_ms = (time.monotonic() - start_time) * 1000
             result.metadata["execution_time_ms"] = round(elapsed_ms, 1)
@@ -290,7 +294,11 @@ class ToolExecutor:
         name: str,
         params: dict[str, Any],
         capabilities: CapabilitySet,
+        context: ToolExecutionContext,
     ) -> str | None:
+        contract_error = self._validate_contract_paths(name, params, context)
+        if contract_error:
+            return contract_error
         if name == "apply_patch_set":
             try:
                 from miniclaude.execution.patches import PatchSet
@@ -298,6 +306,17 @@ class ToolExecutor:
                 for relative in patch.touched_paths:
                     resolve_within_roots(
                         relative,
+                        base=self.config.effective_project_dir(),
+                        roots=capabilities.writable_roots,
+                    )
+                return None
+            except (PathBoundaryError, ValueError) as exc:
+                return str(exc)
+        if name == "delete_files_transactionally":
+            try:
+                for relative in params.get("paths", []):
+                    resolve_within_roots(
+                        str(relative),
                         base=self.config.effective_project_dir(),
                         roots=capabilities.writable_roots,
                     )
@@ -324,6 +343,52 @@ class ToolExecutor:
             return str(exc)
         return None
 
+    def _validate_contract_paths(
+        self,
+        name: str,
+        params: dict[str, Any],
+        context: ToolExecutionContext,
+    ) -> str | None:
+        encoded = context.metadata.get("declared_write_paths", "")
+        if not encoded:
+            return None
+        try:
+            specs = tuple(str(item) for item in json.loads(encoded))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return "Invalid declared write-set metadata"
+        if not specs:
+            return "Task contract grants no writable paths"
+
+        candidates: tuple[str, ...] = ()
+        if name == "apply_patch_set":
+            try:
+                from miniclaude.execution.patches import PatchSet
+                candidates = PatchSet.parse(str(params.get("patch", ""))).touched_paths
+            except ValueError as exc:
+                return str(exc)
+        elif name == "delete_files_transactionally":
+            candidates = tuple(str(item) for item in params.get("paths", []))
+        elif name in {"write_file", "edit_file"}:
+            candidates = (str(params.get("path", "")),)
+        elif name == "run_command":
+            return "Shell execution cannot prove compliance with a declared write set"
+        else:
+            return None
+
+        root = self.config.effective_project_dir().resolve()
+        for raw in candidates:
+            candidate = Path(raw)
+            if candidate.is_absolute():
+                try:
+                    relative = candidate.resolve(strict=False).relative_to(root).as_posix()
+                except ValueError:
+                    return f"Path is outside the task contract: {candidate}"
+            else:
+                relative = candidate.as_posix().lstrip("./")
+            if not any(_matches_declared_path(relative, spec) for spec in specs):
+                return f"Path is outside the task contract write set: {relative}"
+        return None
+
     def _denied(self, name: str, params: dict[str, Any], reason: str) -> ToolResult:
         if self.auditor:
             self.auditor.log_tool_call(name, params, False, reason, risk_level="high")
@@ -347,3 +412,13 @@ def _format_params(params: dict[str, Any], max_len: int = 100) -> str:
     if len(result) > max_len:
         result = result[:max_len] + "..."
     return result
+
+
+def _matches_declared_path(relative: str, spec: str) -> bool:
+    value = relative.replace("\\", "/").strip("/")
+    pattern = spec.replace("\\", "/").strip().lstrip("./").rstrip("/")
+    if not pattern:
+        return False
+    if any(char in pattern for char in "*?["):
+        return PurePosixPath(value).match(pattern)
+    return value == pattern or value.startswith(pattern + "/")

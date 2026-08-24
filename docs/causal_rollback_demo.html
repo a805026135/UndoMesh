@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MiniClaude · Causal Rollback Review</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, "Segoe UI", sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0d1117; color: #f0f6fc; }
+    main { width: 1120px; min-height: 700px; padding: 34px 42px; background: radial-gradient(circle at 80% 0, #12253a 0, #0d1117 34%); }
+    .eyebrow { color: #58a6ff; font-size: 12px; font-weight: 750; letter-spacing: .13em; }
+    h1 { margin: 8px 0 7px; font-size: 32px; letter-spacing: -.03em; }
+    .subtitle { color: #8b98a9; margin: 0 0 25px; font-size: 14px; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; }
+    .card, .evidence { background: rgba(17, 24, 32, .95); border: 1px solid #263241; border-radius: 10px; }
+    .card { padding: 16px 18px; }
+    .label { color: #788596; font-size: 10px; font-weight: 750; letter-spacing: .08em; }
+    .value { margin-top: 7px; font-size: 18px; font-weight: 700; }
+    .yellow { color: #f2cc60; } .blue { color: #58a6ff; } .green { color: #3fb950; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 22px; overflow: hidden; border: 1px solid #263241; border-radius: 10px; background: #111820; }
+    th { padding: 13px 18px; text-align: left; color: #8b98a9; background: #171f2a; font-size: 10px; letter-spacing: .08em; }
+    td { padding: 15px 18px; border-top: 1px solid #202b38; color: #d8dee9; font-size: 14px; }
+    .state { color: #3fb950; font-weight: 700; }
+    .order { color: #58a6ff; font-family: "Cascadia Mono", monospace; }
+    .task { font-weight: 680; }
+    .evidence { margin-top: 19px; padding: 18px 20px; }
+    .evidence h2 { margin: 0 0 12px; color: #8b98a9; font-size: 11px; letter-spacing: .08em; }
+    .row { display: grid; grid-template-columns: 155px 1fr; gap: 15px; padding: 6px 0; }
+    .row span:first-child { color: #788596; font-size: 12px; }
+    code { color: #d8dee9; font: 11px "Cascadia Mono", monospace; }
+    .success { margin-top: 20px; padding: 11px 14px; border-left: 3px solid #3fb950; background: #10231a; color: #8ddb9a; font-size: 13px; }
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">CAUSAL ROLLBACK</div>
+  <h1>Multi-Agent recovery review</h1>
+  <p class="subtitle">Impact closure is computed before any write. Approval is bound to the plan, parent HEAD, candidate commit and tree.</p>
+  <section class="cards">
+    <div class="card"><div class="label">ROOT TASK</div><div class="value">schema-agent</div></div>
+    <div class="card"><div class="label">AFFECTED</div><div class="value yellow">2 TASKS</div></div>
+    <div class="card"><div class="label">STRATEGY</div><div class="value blue">CASCADE</div></div>
+    <div class="card"><div class="label">RESULT</div><div class="value green">VERIFIED</div></div>
+  </section>
+  <table>
+    <thead><tr><th>TASK</th><th>CAUSAL DEPENDENCY</th><th>STATE</th><th>ROLLBACK ORDER</th></tr></thead>
+    <tbody>
+      <tr><td class="task">schema-agent</td><td>—</td><td class="state">ROLLED BACK</td><td class="order">#2</td></tr>
+      <tr><td class="task">client-agent</td><td>schema-agent</td><td class="state">ROLLED BACK</td><td class="order">#1</td></tr>
+    </tbody>
+  </table>
+  <section class="evidence">
+    <h2>APPROVAL EVIDENCE</h2>
+    <div class="row"><span>Plan SHA-256</span><code>caef4d33c7bd3f0c36522627a6bf8edb045f541caa41547764a8dea29c96a8ee</code></div>
+    <div class="row"><span>Review SHA-256</span><code>8000b9f5a506081cfaa00427afac7a980b9d482fb5f21eb9cd323a5b6159da12</code></div>
+    <div class="row"><span>Approved tree</span><code>1d5fa172911f9bf10bfd85c26b705e707b8dd560</code></div>
+    <div class="row"><span>Workspace</span><code>schema-v1 restored · dependent client removed</code></div>
+  </section>
+  <div class="success">✓ Plan digest matched · Review envelope matched · merged tree verified</div>
+</main>
+</body>
+</html>

@@ -58,6 +58,7 @@ class RestoreReceipt:
     updated_at: str
     recovered: bool = False
     error: str = ""
+    requester: dict[str, Any] | None = None
 
 
 class RestoreConflictError(RuntimeError):
@@ -114,7 +115,12 @@ class RestoreCoordinator:
             unavailable=tuple(unavailable),
         )
 
-    def restore(self, transaction_ids: tuple[str, ...]) -> RestoreReceipt:
+    def restore(
+        self,
+        transaction_ids: tuple[str, ...],
+        *,
+        requester: dict[str, Any] | None = None,
+    ) -> RestoreReceipt:
         restore_id = str(uuid4())
         journal: dict[str, Any] = {
             "schema_version": 1,
@@ -124,6 +130,7 @@ class RestoreCoordinator:
             "touched_paths": [],
             "committed_paths": [],
             "recovered": False,
+            "requester": dict(requester or {}),
         }
         self._write_journal(journal)
         mutation_started = False
@@ -534,6 +541,7 @@ class RestoreCoordinator:
             updated_at=str(value.get("updated_at", "")),
             recovered=bool(value.get("recovered", False)),
             error=str(value.get("error", "")),
+            requester=dict(value.get("requester", {})),
         )
 
     @staticmethod

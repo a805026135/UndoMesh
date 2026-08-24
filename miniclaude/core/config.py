@@ -144,6 +144,10 @@ class MiniClaudeConfig(BaseSettings):
         default="data/runtime/jobs.db",
         description="Path to the durable application command queue",
     )
+    causal_db: str = Field(
+        default="data/runtime/causal_tasks.db",
+        description="Path to the multi-agent causal dependency and rollback ledger",
+    )
     telemetry_enabled: bool = Field(
         default=False,
         description="Enable redacted local/exported runtime telemetry",
@@ -200,6 +204,12 @@ class MiniClaudeConfig(BaseSettings):
     @property
     def job_db_path(self) -> Path:
         p = self.base_dir / self.job_db
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
+
+    @property
+    def causal_db_path(self) -> Path:
+        p = self.base_dir / self.causal_db
         p.parent.mkdir(parents=True, exist_ok=True)
         return p
 

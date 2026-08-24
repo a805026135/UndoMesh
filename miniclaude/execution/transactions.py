@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from enum import StrEnum
 from contextlib import contextmanager
 import hashlib
@@ -69,6 +69,7 @@ class TransactionReceipt:
     backup_expired_at: str = ""
     hot_backup_expired_at: str = ""
     importance: int = 50
+    causal: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -180,7 +181,13 @@ class DurableChangeEngine:
         from miniclaude.execution.recovery import RestoreCoordinator
         self.restore_coordinator = RestoreCoordinator(self)
 
-    def apply(self, patch: PatchSet, *, verify: tuple[str, ...] = ()) -> TransactionReceipt:
+    def apply(
+        self,
+        patch: PatchSet,
+        *,
+        verify: tuple[str, ...] = (),
+        causal: dict[str, Any] | None = None,
+    ) -> TransactionReceipt:
         transaction_id = str(uuid4())
         journal: dict[str, Any] = {
             "schema_version": 1,
@@ -191,6 +198,7 @@ class DurableChangeEngine:
             "verification": [],
             "conflict_paths": [],
             "importance": self._infer_importance(patch.touched_paths),
+            "causal": self._normalize_causal(causal),
         }
         self._write_journal(journal)
         stage: Path | None = None
@@ -252,7 +260,12 @@ class DurableChangeEngine:
             if stage and stage.exists():
                 shutil.rmtree(stage.parent, ignore_errors=True)
 
-    def delete_files(self, paths: tuple[str, ...]) -> TransactionReceipt:
+    def delete_files(
+        self,
+        paths: tuple[str, ...],
+        *,
+        causal: dict[str, Any] | None = None,
+    ) -> TransactionReceipt:
         """Durably back up declared files before deleting them from the workspace."""
         touched = tuple(dict.fromkeys(paths))
         if not touched:
@@ -275,6 +288,7 @@ class DurableChangeEngine:
             "verification": [],
             "conflict_paths": [],
             "importance": self._infer_importance(touched),
+            "causal": self._normalize_causal(causal),
         }
         self._write_journal(journal)
         root_mutation_started = False
@@ -556,8 +570,24 @@ class DurableChangeEngine:
     def preview_restore(self, transaction_ids: tuple[str, ...]):
         return self.restore_coordinator.preview(transaction_ids)
 
-    def restore_transactions(self, transaction_ids: tuple[str, ...]):
-        return self.restore_coordinator.restore(transaction_ids)
+    def restore_transactions(
+        self,
+        transaction_ids: tuple[str, ...],
+        *,
+        requester: dict[str, Any] | None = None,
+    ):
+        return self.restore_coordinator.restore(transaction_ids, requester=requester)
+
+    def transactions_for_task(self, task_id: str) -> tuple[TransactionReceipt, ...]:
+        """Return committed transactions causally attributed to one task."""
+        values = []
+        for path in self.journals.glob("*.json"):
+            journal = json.loads(path.read_text(encoding="utf-8"))
+            causal = journal.get("causal", {})
+            if causal.get("task_id") == task_id:
+                values.append(journal)
+        values.sort(key=self._state_timestamp)
+        return tuple(self._receipt(value) for value in values)
 
     def recover_incomplete_restores(self):
         return self.restore_coordinator.recover_incomplete()
@@ -1096,4 +1126,23 @@ class DurableChangeEngine:
             backup_expired_at=str(journal.get("backup_expired_at", "")),
             hot_backup_expired_at=str(journal.get("hot_backup_expired_at", "")),
             importance=int(journal.get("importance", 50)),
+            causal=dict(journal.get("causal", {})),
         )
+
+    @staticmethod
+    def _normalize_causal(value: dict[str, Any] | None) -> dict[str, Any]:
+        if not value:
+            return {}
+        allowed = {
+            "session_id", "turn_id", "step_id", "agent_id", "task_id",
+            "parent_task_id", "worktree_id", "baseline", "declared_read_paths",
+            "declared_write_paths", "dependency_task_ids",
+        }
+        result: dict[str, Any] = {}
+        for key in allowed:
+            item = value.get(key)
+            if isinstance(item, str):
+                result[key] = item[:4096]
+            elif isinstance(item, (list, tuple)):
+                result[key] = [str(part)[:4096] for part in item[:256]]
+        return result

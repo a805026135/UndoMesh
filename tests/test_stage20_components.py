@@ -66,9 +66,11 @@ def test_worktree_review_digest_gates_deterministic_merge(tmp_path):
         verification_argv=["git", "diff", "--check"],
         commit_message="reviewed candidate",
     )
-    with pytest.raises(PermissionError, match="digest"):
-        workflow.approve_and_merge(review, approved_diff_sha256="wrong")
-    merged = workflow.approve_and_merge(review, approved_diff_sha256=review.diff_sha256)
+    with pytest.raises(PermissionError, match="envelope"):
+        workflow.approve_and_merge(review, approved_review_sha256="wrong")
+    merged = workflow.approve_and_merge(
+        review, approved_review_sha256=review.review_sha256
+    )
     assert (repo / "a.txt").read_text(encoding="utf-8") == "candidate\n"
     assert merged
     manager.remove(candidate)

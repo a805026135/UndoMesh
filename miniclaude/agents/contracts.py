@@ -20,6 +20,7 @@ class TaskContract:
     task_id: str
     agent_type: str
     objective: str
+    parent_task_id: str = "root"
     dependencies: tuple[str, ...] = ()
     readable_paths: tuple[str, ...] = ()
     writable_paths: tuple[str, ...] = ()

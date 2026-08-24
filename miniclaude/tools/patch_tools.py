@@ -11,6 +11,7 @@ from miniclaude.execution.patches import PatchSet, PatchValidationError
 from miniclaude.execution.transactions import DurableChangeEngine, TransactionConflictError, TransactionState
 from miniclaude.execution.backup_store import BackupStoreError
 from miniclaude.execution.recovery import RestoreConflictError, RestoreUnavailableError
+from miniclaude.execution.context import current_causal_metadata
 from miniclaude.tools.base import BaseTool, ToolResult
 
 
@@ -51,7 +52,11 @@ class ApplyPatchSetTool(BaseTool):
         try:
             patch = PatchSet.parse(str(kwargs.get("patch", "")))
             commands = tuple(str(item) for item in kwargs.get("verification_commands", []))
-            receipt = _engine(self._config).apply(patch, verify=commands)
+            receipt = _engine(self._config).apply(
+                patch,
+                verify=commands,
+                causal=current_causal_metadata(),
+            )
         except (PatchValidationError, TransactionConflictError, ValueError, OSError) as exc:
             return self._error(f"Patch rejected: {exc}", metadata={"denied": True})
         payload = {
@@ -89,7 +94,8 @@ class RollbackChangeSetTool(BaseTool):
     async def execute(self, **kwargs: Any) -> ToolResult:
         try:
             receipt = _engine(self._config).restore_transactions(
-                (str(kwargs.get("transaction_id", "")),)
+                (str(kwargs.get("transaction_id", "")),),
+                requester=current_causal_metadata(),
             )
         except (BackupStoreError, RestoreConflictError, RestoreUnavailableError, TransactionConflictError, OSError, ValueError) as exc:
             return self._error(f"Rollback rejected: {exc}", metadata={"denied": True})
@@ -153,7 +159,10 @@ class RestoreTransactionsTool(BaseTool):
     async def execute(self, **kwargs: Any) -> ToolResult:
         try:
             ids = tuple(str(item) for item in kwargs.get("transaction_ids", []))
-            receipt = _engine(self._config).restore_transactions(ids)
+            receipt = _engine(self._config).restore_transactions(
+                ids,
+                requester=current_causal_metadata(),
+            )
         except (BackupStoreError, RestoreConflictError, RestoreUnavailableError, OSError, ValueError) as exc:
             return self._error(f"Restore rejected: {exc}", metadata={"denied": True})
         payload = asdict(receipt)
@@ -249,7 +258,10 @@ class DeleteFilesTransactionallyTool(BaseTool):
     async def execute(self, **kwargs: Any) -> ToolResult:
         try:
             paths = tuple(str(item) for item in kwargs.get("paths", []))
-            receipt = _engine(self._config).delete_files(paths)
+            receipt = _engine(self._config).delete_files(
+                paths,
+                causal=current_causal_metadata(),
+            )
         except (PatchValidationError, TransactionConflictError, OSError, ValueError) as exc:
             return self._error(f"Delete rejected: {exc}", metadata={"denied": True})
         payload = {

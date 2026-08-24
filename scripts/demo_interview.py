@@ -92,7 +92,7 @@ async def main_async() -> dict[str, object]:
             commit_message="candidate",
         )
         merge_commit = workflow.approve_and_merge(
-            review, approved_diff_sha256=review.diff_sha256
+            review, approved_review_sha256=review.review_sha256
         )
         merged_content = (work_repo / "feature.txt").read_text(encoding="utf-8").strip()
         manager.remove(candidate)

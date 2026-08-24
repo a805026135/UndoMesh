@@ -235,6 +235,10 @@ Unified Diff 不适合大二进制文件，因此提供专用删除事务。它�
 
 Scheduler 按依赖生成执行波次。写集不重叠的任务可以并行，重叠任务串行；失败依赖会阻止下游任务。子 Agent 继续受到 Capability 和 Permission 控制，父 Agent 不因委派而放弃最终质量责任。
 
+调度之外，系统使用 `CausalTaskLedger` 持久记录显式依赖及由读写集推导出的动态依赖。ToolExecutor 会把 Task/Agent/Worktree 身份传播到 Change Journal，并硬性拒绝声明写集之外的修改。候选在真实 Git Worktree 中验证；审核摘要绑定父 HEAD、候选 Commit、完整 Tree、Binary Diff 和验证结果。
+
+当某个已合并子任务需要撤销时，系统先计算传递影响闭包。`cascade` 逆拓扑撤销后代和根任务；`replay` 在撤销闭包后跳过根任务并重放后代候选。整个补偿仍在隔离 Worktree 中准备，最终由 Plan SHA 与 Review SHA 双重审批后确定性合并。冲突、父 HEAD 漂移或候选变化都会终止流程，不修改主工作区。
+
 ## 14. 多模型 Provider
 
 桌面和配置层支持 OpenAI、DeepSeek、Anthropic、Gemini、阿里云百炼、Kimi/Moonshot 和自定义 OpenAI-compatible 服务。预置 Provider 给出默认 Base URL 和常用模型，用户可以覆盖模型和端点并执行最小连通性测试。

@@ -172,15 +172,22 @@ class Orchestrator:
             scoped_config = self.config.model_copy(
                 update={"project_dir": str(workspace)}
             )
+            scoped_registry = ToolRegistry(scoped_config)
+            scoped_registry.register_all()
             agent = SubAgent(
                 agent_type=contract.agent_type,
                 config=scoped_config,
                 llm_client=self.llm_client,
-                tool_registry=self.tool_registry,
+                tool_registry=scoped_registry,
             )
             context = {
+                "task_id": contract.task_id,
+                "parent_task_id": contract.parent_task_id,
+                "session_id": session_id,
+                "worktree_id": workspace.name,
                 "readable_paths": contract.readable_paths,
                 "writable_paths": contract.writable_paths,
+                "dependencies": contract.dependencies,
                 "expected_outputs": contract.expected_outputs,
                 "verification_commands": contract.verification_commands,
             }

@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import logging
 import asyncio
+import hashlib
+import tempfile
+from pathlib import Path
 from typing import Any
 
+from miniclaude.agents.causal import CausalTaskLedger, CausalWorktreeCoordinator
 from miniclaude.agents.orchestrator import Orchestrator
 from miniclaude.context.manager import ContextManager
 from miniclaude.core.config import get_config, MiniClaudeConfig
@@ -91,6 +95,8 @@ class MiniClaudeApp:
 
         # Multi-agent
         self.orchestrator: Orchestrator | None = None
+        self.causal_ledger: CausalTaskLedger | None = None
+        self.causal_coordinator: CausalWorktreeCoordinator | None = None
 
         # Security
         self.permission_manager: PermissionManager | None = None
@@ -108,6 +114,18 @@ class MiniClaudeApp:
             backup_encryption_key=self.config.transaction_backup_key_bytes(),
             chunking_policy=self.config.transaction_chunking_policy(),
             hot_vault_policy=self.config.transaction_hot_vault_policy(),
+        )
+        project_identity = hashlib.sha256(
+            str(self.config.effective_project_dir()).encode("utf-8")
+        ).hexdigest()[:16]
+        worktree_root = (
+            Path(tempfile.gettempdir())
+            / "miniclaude-causal-worktrees"
+            / project_identity
+        )
+        self.causal_ledger = CausalTaskLedger(self.config.causal_db_path)
+        self.causal_coordinator = CausalWorktreeCoordinator(
+            self.config.effective_project_dir(), worktree_root, self.causal_ledger
         )
 
     async def test_provider_connection(self, candidate: MiniClaudeConfig) -> str:
@@ -340,6 +358,11 @@ class MiniClaudeApp:
 
         if self.skill_version_store:
             self.skill_version_store.close()
+
+        if self.causal_ledger:
+            self.causal_ledger.close()
+            self.causal_ledger = None
+            self.causal_coordinator = None
 
         # Close LLM client
         if self.llm_client:
